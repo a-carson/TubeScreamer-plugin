@@ -132,6 +132,13 @@ public:
 		return c;
 	}
 
+	void scalarMultily3x3(temp a[3][3], temp scalar)
+	{
+		for (int i = 0; i < 3; i++)
+			for (int j = 0; j < 3; j++)
+				a[i][j] *= scalar;
+	}
+
 	void invert3x3(temp a[3][3])
 	{
 		// Matrices for adjoint and inverse

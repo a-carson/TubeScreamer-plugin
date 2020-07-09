@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="qiW8ag" name="TubeScreamer" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="C:\Users\alist\OneDrive\Documents\JUCE\project\TubeScreamer\TubeScreamer\eigen-3.3.7">
   <MAINGROUP id="bXnUSW" name="TubeScreamer">
     <GROUP id="{7BD14291-793B-0A9C-D4C9-5DD0177563D0}" name="Source">
       <FILE id="PBX0mG" name="Matrices.h" compile="0" resource="0" file="Source/Matrices.h"/>
