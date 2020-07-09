@@ -157,7 +157,7 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (int i = 0; i < numSamples; i++)
     {
         // for testing
-        left[i] = 0.1f * sineOsc.process();
+        //left[i] = 0.01f * sineOsc.process();
 
         // process audio
         left[i] = outGain * clippingStage.process(inGain * left[i]);
