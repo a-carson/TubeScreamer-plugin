@@ -30,3 +30,107 @@
 *.exe
 *.out
 *.app
+TubeScreamer/JuceLibraryCode/ReadMe.txt
+TubeScreamer/JuceLibraryCode/JucePluginDefines.h
+TubeScreamer/JuceLibraryCode/JuceHeader.h
+TubeScreamer/JuceLibraryCode/include_juce_gui_extra.mm
+TubeScreamer/JuceLibraryCode/include_juce_gui_extra.cpp
+TubeScreamer/JuceLibraryCode/include_juce_gui_basics.mm
+TubeScreamer/JuceLibraryCode/include_juce_gui_basics.cpp
+TubeScreamer/JuceLibraryCode/include_juce_graphics.mm
+TubeScreamer/JuceLibraryCode/include_juce_graphics.cpp
+TubeScreamer/JuceLibraryCode/include_juce_events.mm
+TubeScreamer/JuceLibraryCode/include_juce_events.cpp
+TubeScreamer/JuceLibraryCode/include_juce_dsp.mm
+TubeScreamer/JuceLibraryCode/include_juce_dsp.cpp
+TubeScreamer/JuceLibraryCode/include_juce_data_structures.mm
+TubeScreamer/JuceLibraryCode/include_juce_data_structures.cpp
+TubeScreamer/JuceLibraryCode/include_juce_core.mm
+TubeScreamer/JuceLibraryCode/include_juce_core.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_utils.mm
+TubeScreamer/JuceLibraryCode/include_juce_audio_utils.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_processors.mm
+TubeScreamer/JuceLibraryCode/include_juce_audio_processors.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_VST_utils.mm
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_VST3.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_VST2.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_utils.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_Unity.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_Standalone.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_RTAS_utils.mm
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_RTAS_utils.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_RTAS_4.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_RTAS_3.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_RTAS_2.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_RTAS_1.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_RTAS.r
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_AUv3.mm
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_AU_2.mm
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_AU_1.mm
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_AU.r
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_AAX.mm
+TubeScreamer/JuceLibraryCode/include_juce_audio_plugin_client_AAX.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_formats.mm
+TubeScreamer/JuceLibraryCode/include_juce_audio_formats.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_devices.mm
+TubeScreamer/JuceLibraryCode/include_juce_audio_devices.cpp
+TubeScreamer/JuceLibraryCode/include_juce_audio_basics.mm
+TubeScreamer/JuceLibraryCode/include_juce_audio_basics.cpp
+TubeScreamer/Builds/VisualStudio2019/TubeScreamer_VST3.vcxproj.filters
+TubeScreamer/Builds/VisualStudio2019/TubeScreamer_VST3.vcxproj
+TubeScreamer/Builds/VisualStudio2019/TubeScreamer_StandalonePlugin.vcxproj.filters
+TubeScreamer/Builds/VisualStudio2019/TubeScreamer_StandalonePlugin.vcxproj
+TubeScreamer/Builds/VisualStudio2019/TubeScreamer_SharedCode.vcxproj.filters
+TubeScreamer/Builds/VisualStudio2019/TubeScreamer_SharedCode.vcxproj
+TubeScreamer/Builds/VisualStudio2019/TubeScreamer.sln
+TubeScreamer/Builds/VisualStudio2019/resources.rc
+TubeScreamer/Builds/VisualStudio2019/.vs/TubeScreamer/v16/.suo
+TubeScreamer/Builds/VisualStudio2019/.vs/TubeScreamer/v16/Browse.VC.db
+TubeScreamer/Builds/VisualStudio2019/.vs/TubeScreamer/v16/Browse.VC.opendb
+TubeScreamer/Builds/VisualStudio2019/.vs/TubeScreamer/v16/Solution.VC.db
+TubeScreamer/Builds/VisualStudio2019/.vs/TubeScreamer/v16/Solution.VC.db-shm
+TubeScreamer/Builds/VisualStudio2019/.vs/TubeScreamer/v16/Solution.VC.db-wal
+TubeScreamer/Builds/VisualStudio2019/TubeScreamer_StandalonePlugin.vcxproj.user
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/TubeScre.00EF3D8D.tlog/CL.19476.write.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/TubeScre.00EF3D8D.tlog/CL.command.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/TubeScre.00EF3D8D.tlog/CL.read.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/TubeScre.00EF3D8D.tlog/Lib-link.read.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/TubeScre.00EF3D8D.tlog/Lib-link.write.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/TubeScre.00EF3D8D.tlog/Lib.command.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/TubeScre.00EF3D8D.tlog/TubeScreamer_SharedCode.lastbuildstate
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/TubeScreamer_SharedCode.log
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/TubeScreamer_SharedCode.pdb
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/resources.res
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScre.849CD31D.tlog/CL.command.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScre.849CD31D.tlog/CL.read.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScre.849CD31D.tlog/CL.write.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScre.849CD31D.tlog/link.command.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScre.849CD31D.tlog/link.read.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScre.849CD31D.tlog/link.write.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScre.849CD31D.tlog/rc.command.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScre.849CD31D.tlog/rc.read.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScre.849CD31D.tlog/rc.write.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScre.849CD31D.tlog/TubeScreamer_StandalonePlugin.lastbuildstate
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScreamer.ilk
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScreamer.pdb
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScreamer_StandalonePlugin.log
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/vc142.pdb
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/resources.res
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/CL.command.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/CL.read.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/CL.write.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/link.command.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/link.read.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/link.write.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/rc.command.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/rc.read.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/rc.write.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/TubeScreamer_VST3.lastbuildstate
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/TubeScreamer_VST3.write.1u.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScreamer.exp
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScreamer.ilk
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScreamer.pdb
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScreamer.vst3
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScreamer_VST3.log
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/vc142.pdb
+TubeScreamer/Builds/VisualStudio2019/.vs/TubeScreamer/v16/ipch/AutoPCH/673533852d57f4c8/PLUGINEDITOR.ipch
