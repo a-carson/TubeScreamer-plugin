@@ -122,7 +122,7 @@ public:
 		DBG(H_);
 		DBG(K_);
 
-		cap = Ni * Vt * acosh(-Ni * Vt / (2 * Is * K_));
+		cap = Ni * Vt * acoshf(-Ni * Vt / (2 * Is * K_));
 	}
 
 	// i(v)
@@ -143,7 +143,7 @@ public:
 		}
 		else
 		{
-			return p + 2.0f * K_ * Is * sinh(arg) - v;
+			return p + 2.0f * K_ * Is * sinhf(arg) - v;
 		}
 	}
 
@@ -159,7 +159,7 @@ public:
 		}
 		else
 		{
-			return 2.0f * K_ * (Is / (Vt * Ni)) * cosh(arg) - 1.0f;
+			return 2.0f * K_ * (Is / (Vt * Ni)) * coshf(arg) - 1.0f;
 		}
 	}
 
@@ -169,7 +169,7 @@ public:
 	{
 		unsigned int iter = 0;
 		const temp p = matTool.mat2float(G_ * x) + H_ * in;
-		//y = Ni * Vt * asinh(p / (2 * Is * K_));
+		y = Ni * Vt * asinhf(p / (2 * Is * K_));
 		temp res = func(y, p);
 		temp J = dfunc(y);
 		temp step = res / J;
@@ -203,9 +203,9 @@ public:
 			temp damper = 1.0f;
 			unsigned int subIter = 0;
 
-			while ((fabsf(res) > fabsf(res_old)) && (subIter < maxSubIter))
+			while (((fabsf(res) > fabsf(res_old) || isnan(fabsf(res)) || isinf(fabsf(res))) && (subIter < maxSubIter)))
 			{
-				damper = damper * 0.5;
+				damper *= 0.5f;
 				y = y_old - damper * step;
 				res = func(y, p);
 				subIter++;
@@ -227,14 +227,19 @@ public:
 			i = 0;
 		}
 
-		if (i > 10.0f)
+		if (y > 1.0f)
 		{
-			i = 0;
+			i = 0.0;
+			y = 0.0f;
+			x.clear();
 		}
+
 
 		if (iter >= maxIters)
 		{
-			i = 0;
+			i = 0.0f;
+			y = 0.0f;
+			x.clear();
 		}
 
 		// update state variable
@@ -242,14 +247,14 @@ public:
 		x = A_ * x_prev + (B_ * in) + (C_ * i);
 		float out = matTool.mat2float(D_ * x_prev) + E_ * in + F_ * i;
 
-		if (out > 2.0f)
+		/*if (out > 5.0f)
 		{
 			out = 0.0f;
 			y = 0.0f;
 			x.clear();
 			x_prev = x;
-		}
 
+		}*/
 		return out;
 	}
 
@@ -306,8 +311,8 @@ private:
 	temp b[3][1] = { {1}, {1}, {1} };
 	// Newton raphson parameters
 	temp cap;
-	const temp tol = 1e-7;						// tolerance
-	const unsigned int maxIters = 50;  // maximum number of iterations
-	const unsigned int maxSubIter = 10;
+	const temp tol = 1e-7f;						// tolerance
+	const unsigned int maxIters = 100;  // maximum number of iterations
+	const unsigned int maxSubIter = 20;
 };
 #endif // !TSClippingStage_h
