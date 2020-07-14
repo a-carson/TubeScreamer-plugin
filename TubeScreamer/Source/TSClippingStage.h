@@ -25,8 +25,7 @@ public:
 
 	void setDistortion(temp distortion)
 	{
-		dist = distortion;
-		r2 = 51e3 + dist;
+		r2 = 51e3 + distortion;
 		A[1][1] = -1.0f / (r2 * c2);
 		updateStateSpaceArrays();
 	}
@@ -76,6 +75,9 @@ public:
 			D_[i] *= 2.0f * fs;
 			G_[i] *= 2.0f * fs;
 		}
+
+		// update Newton cap
+		cap = Ni * Vt * acoshf(-Ni * Vt / (2 * Is * K_));
 	}
 
 
@@ -86,11 +88,11 @@ public:
 		const temp p = matTool.multiply1x3by3x1(G_, x) + H_ * in;
 
 		// initial guess
-		y = Ni * Vt * asinhf(p / (2 * Is * K_));
+		v = Ni * Vt * asinhf(p / (2 * Is * K_));
 
 		// newtons method
-		y = cappedNewton(y, p);
-		temp iv = (y - p) / K_;
+		v = cappedNewton(v, p);
+		temp iv = (v - p) / K_;
 
 		// update state variable
 		matTool.copyTo(x_prev, x);
@@ -109,7 +111,7 @@ public:
 		if (out > 5.0f)
 		{
 			out = 0.0f;
-			y = 0.0f;
+			v = 0.0f;
 			for (int i = 0; i < 3; i++)
 			{
 				x[i][0] = 0.0f;
@@ -198,25 +200,25 @@ private:
 	}
 
 	/*Symmetric clipping function*/
-	temp func(temp v, temp p)
+	temp func(temp y, temp p)
 	{
-		temp arg = v / (Vt * Ni);
+		temp arg = y / (Vt * Ni);
 
 		if (fabsf(arg) < 5)
 		{
 			temp sinhy = FastMathApproximations::sinh<temp>(arg);
-			return p + (2.0f * K_ * Is * sinhy) - v;
+			return p + (2.0f * K_ * Is * sinhy) - y;
 		}
 		else
 		{
-			return p + (2.0f * K_ * Is * sinhf(arg)) - v;
+			return p + (2.0f * K_ * Is * sinhf(arg)) - y;
 		}
 	}
 
 	/*Jacobian*/
-	temp dfunc(temp v)
+	temp dfunc(temp y)
 	{
-		temp arg = v / (Vt * Ni);
+		temp arg = y / (Vt * Ni);
 
 		if (fabsf(arg) < 5)
 		{
@@ -235,11 +237,9 @@ private:
 	// state variable
 	temp x[3][1] = { { 0.0f }, { 0.0f }, { 0.0f } };
 	temp x_prev[3][1] = { { 0.0f }, { 0.0f }, { 0.0f } };
-	// output variable
-	temp y = 0.0f;
 
-	// Pedal Settings
-	temp dist = 0.5f;
+	// voltage across diodes
+	temp v = 0.0f;
 
 	// Circuit parameters
 	temp r1 = 10e3f;
@@ -248,9 +248,9 @@ private:
 	temp c1 = 1e-6f;
 	temp c2 = 51e-12f;
 	temp c3 = 47e-9f;
-	temp Is = 2.52e-9f;								// saturation current
-	temp Vt = 25.85e-3f;								// thermal voltage
-	temp Ni = 1.752f;								// ideality factor
+	temp Is = 2.52e-9f;						
+	temp Vt = 25.85e-3f;							
+	temp Ni = 1.752f;								
 
 	Matrices<temp> matTool;
 
@@ -264,24 +264,22 @@ private:
 	temp D[3] = { -1.0f, 1.0f, 0.0f };
 	temp E = 1.0f;
 	temp G[3] = { 0.0f, 1.0f, 0.0f };
-	temp I[3][3];
-	temp Z[3][3];
 
-
-	temp A_[3][3] = { { 0.997918834547347f,  0.0f ,  0.0f },
-	{	-60.490777826210604f,  0.459122653674072f ,  -60.553789053112894f },
-	{	-0.089970406484047f ,  0.0f,  0.909935874342532f } };
-	temp B_[3][1] = { { 0.002081165452653f},{60.490777826210596f},{0.089970406484047f } };
-	temp C_[3][1] = { { 0.0f},{-298023.4178255865f},{0.0f } };
-	temp D_[3] = { -31.244348330378976f,   0.729561326837036f,-30.276894526556443 };
-	temp E_ = 31.244348330378973f;
-	temp F_ = -149011.7089127933f;
-	temp G_[3] = { -30.245388913105302f,   0.729561326837036f, -30.276894526556443 };
-	temp H_ = 30.245388913105298f;
-	temp K_ = -149011.7089127933f;
+	temp A_[3][3], B_[3][1], C_[3][1], D_[3], E_, F_, G_[3], H_, K_, I[3][3], Z[3][3];
+	//temp A_[3][3] = { { 0.997918834547347f,  0.0f ,  0.0f },
+	//{	-60.490777826210604f,  0.459122653674072f ,  -60.553789053112894f },
+	//{	-0.089970406484047f ,  0.0f,  0.909935874342532f } };
+	//temp B_[3][1] = { { 0.002081165452653f},{60.490777826210596f},{0.089970406484047f } };
+	//temp C_[3][1] = { { 0.0f},{-298023.4178255865f},{0.0f } };
+	//temp D_[3] = { -31.244348330378976f,   0.729561326837036f,-30.276894526556443 };
+	//temp E_ = 31.244348330378973f;
+	//temp F_ = -149011.7089127933f;
+	//temp G_[3] = { -30.245388913105302f,   0.729561326837036f, -30.276894526556443 };
+	//temp H_ = 30.245388913105298f;
+	//temp K_ = -149011.7089127933f;
 
 	// Newton raphson parameters
-	temp cap = Ni * Vt * acoshf(-Ni * Vt / (2 * Is * K_));
+	temp cap;// = Ni * Vt * acoshf(-Ni * Vt / (2 * Is * K_));
 	const temp tol = 1e-7f;						// tolerance
 	const unsigned int maxIters = 50;  // maximum number of iterations
 	const unsigned int maxSubIter = 5;

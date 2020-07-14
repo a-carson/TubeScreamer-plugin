@@ -1762,3 +1762,4 @@ TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScreamer.Bu
 TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScreamer_StandalonePlugin.vcxproj.FileListAbsolute.txt
 TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScreamer.Build.CppClean.log
 TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScreamer_VST3.vcxproj.FileListAbsolute.txt
+TubeScreamer/Builds/VisualStudio2019/.vs/TubeScreamer/v16/ipch/AutoPCH/5609d3c6b18b928b/INCLUDE_JUCE_AUDIO_BASICS.ipch

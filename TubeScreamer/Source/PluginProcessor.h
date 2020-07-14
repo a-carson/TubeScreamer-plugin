@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "TSClippingStage.h"
+#include "TSTone.h"
 #include "Oscillator.h"
 using namespace juce;
 
@@ -57,11 +58,17 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
+    AudioProcessorValueTreeState parameters;
     std::atomic <float>* gain;
     std::atomic <float>* distortion;
+    std::atomic <float>* tone;
     std::atomic <float>* out;
-    AudioProcessorValueTreeState parameters;
+    float inGain = 1.0f;
+
+    IIRFilter highPass1;
+    IIRFilter highPass2;
     TSClippingStage<float> clippingStage;
+    TSTone<float> toneStage;
     SineOsc sineOsc;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TubeScreamerAudioProcessor)

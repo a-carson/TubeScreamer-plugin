@@ -24,12 +24,14 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
     parameters(*this, nullptr, "ParamTreeIdentifier", {
     //std::make_unique < AudioParameterFloat >("gain", "Gain", -10.0f, 35.0f , 0.0f) ,
     std::make_unique < AudioParameterFloat >("dist", "Distortion", 0.0f, 10.0f, 5.0f),
+    std::make_unique < AudioParameterFloat >("tone", "Tone", 0.0f, 10.0f, 5.0f),
     std::make_unique < AudioParameterFloat >("output", "Level", 0.0f, 10.0f, 5.0f),
         })
 {
     gain = parameters.getRawParameterValue("gain");
     out = parameters.getRawParameterValue("output");
     distortion = parameters.getRawParameterValue("dist");
+    tone = parameters.getRawParameterValue("tone");
 }
 
 TubeScreamerAudioProcessor::~TubeScreamerAudioProcessor()
@@ -101,10 +103,21 @@ void TubeScreamerAudioProcessor::changeProgramName (int index, const juce::Strin
 //==============================================================================
 void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    // Sine Osc - for testing only
     sineOsc.setSampleRate(sampleRate);
     sineOsc.setFrequency(220.0f);
+
+    // Input High Pass
+    highPass1.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.9));
+    highPass2.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.6));
+
+    // Clipping
     clippingStage.setSampleRate(sampleRate);
     clippingStage.setDistortion(0.5f);
+
+    // Tone
+    toneStage.setSampleRate(sampleRate);
+    toneStage.setTone(1.0f);
 }
 
 void TubeScreamerAudioProcessor::releaseResources()
@@ -146,31 +159,37 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // get buffer info
+    // Get Buffer ----------------------------------------------
     int numSamples = buffer.getNumSamples();
     float* left = buffer.getWritePointer(0);
     float* right = buffer.getWritePointer(1);
 
-    // get UI params
-    //float inGain = pow(10, *gain / 20.0f);
-    float inGain = 1.0f;
-
+    // UI Params -----------------------------------------------
+    //inGain = pow(10, *gain / 20.0f);
+    // Distortion
     float dist = *distortion/10.0f;
     dist = pow(10, jmap(dist, 0.0f, 5.7f));
     clippingStage.setDistortion(dist);
 
-    float outGain = *out / 10.0f;
-    //float outGain = pow(10, *out / 2.0f)/1e5f;
+    // Tone
+    toneStage.setTone(*tone / 10.0f);
 
-    // Clipping stage
+    // Level
+    float outGain = *out / 10.0f;
+
+    // Process Audio ---------------------------------------------
     for (int i = 0; i < numSamples; i++)
     {
-        // for testing
-        //left[i] = sineOsc.process();
-        //left[i] *= 0.1f;
-        // process audio
-        left[i] = 0.95 * outGain * clippingStage.process(inGain * left[i]);
-        right[i] = left[i];
+        // Sine wave - for testing only
+        //left[i] = 0.1f * sineOsc.process();
+
+        // Process Audio
+        float highPassOut = highPass1.processSingleSampleRaw(left[i]);
+        highPassOut = highPass2.processSingleSampleRaw(highPassOut);
+        float clipOut = clippingStage.process(inGain * highPassOut);
+        float toneOut = 0.95 * outGain * toneStage.processSingleSample(clipOut);
+        left[i] = toneOut;
+        right[i] = toneOut;
     }
 
 
