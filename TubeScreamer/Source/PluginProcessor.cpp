@@ -102,7 +102,7 @@ void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     sineOsc.setSampleRate(sampleRate);
     sineOsc.setFrequency(220.0f);
     clippingStage.setSampleRate(sampleRate);
-    clippingStage.setDistortion(0.5f);
+    //clippingStage.setDistortion(0.5f);
 }
 
 void TubeScreamerAudioProcessor::releaseResources()
@@ -157,8 +157,8 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (int i = 0; i < numSamples; i++)
     {
         // for testing
-        //left[i] = 0.01f * sineOsc.process();
-
+        //left[i] = sineOsc.process();
+        left[i] *= 0.1f;
         // process audio
         left[i] = outGain * clippingStage.process(inGain * left[i]);
         right[i] = left[i];

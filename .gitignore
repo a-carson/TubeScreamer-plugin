@@ -1753,3 +1753,6 @@ TubeScreamer/eigen-3.3.7/unsupported/test/polynomialutils.cpp
 TubeScreamer/eigen-3.3.7/unsupported/test/sparse_extra.cpp
 TubeScreamer/eigen-3.3.7/unsupported/test/special_functions.cpp
 TubeScreamer/eigen-3.3.7/unsupported/test/splines.cpp
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/Standalone Plugin/TubeScre.849CD31D.tlog/link.12060.delete.1.tlog
+TubeScreamer/Builds/VisualStudio2019/x64/Debug/VST3/TubeScre.376D94E0.tlog/link.38944.delete.1.tlog
+TubeScreamer/Builds/VisualStudio2019/.vs/TubeScreamer/v16/ipch/AutoPCH/d094d2130922744f/INCLUDE_JUCE_AUDIO_PROCESSORS.ipch

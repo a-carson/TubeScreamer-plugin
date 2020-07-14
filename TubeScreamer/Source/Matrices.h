@@ -108,7 +108,14 @@ public:
 		A(0, 0) = a;
 		return A;
 	}
-
+/*Copies b to a*/
+	void copyTo(temp a[3][1], temp b[3][1])
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			a[i][0] = b[i][0];
+		}
+	}
 	// Multiply 3x3 by 3x1  - returns 3x1
 	void multiply3x3by3x1(temp a[3][3], temp b[3][1], temp c[3][1])
 	{
@@ -118,6 +125,12 @@ public:
 			for (int j = 0; j < 3; j++)
 				c[i][0] += a[i][j] * b[j][0];
 		}
+	}
+	/*adds b to a*/
+	void add3x1s(temp a[3][1], temp b[3][1])
+	{
+		for (int i = 0; i < 3 i++)
+			a[i][0] += b[i][0];
 	}
 
 	// Multiply 1x3 by 3x1 - returns scalar
@@ -131,6 +144,7 @@ public:
 		}
 		return c;
 	}
+
 
 	void invert3x3(temp a[3][3])
 	{
