@@ -22,12 +22,14 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
                        ),
 #endif
     parameters(*this, nullptr, "ParamTreeIdentifier", {
-    std::make_unique < AudioParameterFloat >("gain", "Gain", -10.0f, 35.0f , 0.0f) ,
-    std::make_unique < AudioParameterFloat >("output", "Level", -60.0f, 0.0f, -30.0f),
+    //std::make_unique < AudioParameterFloat >("gain", "Gain", -10.0f, 35.0f , 0.0f) ,
+    std::make_unique < AudioParameterFloat >("dist", "Distortion", 0.0f, 10.0f, 5.0f),
+    std::make_unique < AudioParameterFloat >("output", "Level", 0.0f, 10.0f, 5.0f),
         })
 {
     gain = parameters.getRawParameterValue("gain");
     out = parameters.getRawParameterValue("output");
+    distortion = parameters.getRawParameterValue("dist");
 }
 
 TubeScreamerAudioProcessor::~TubeScreamerAudioProcessor()
@@ -102,7 +104,7 @@ void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     sineOsc.setSampleRate(sampleRate);
     sineOsc.setFrequency(220.0f);
     clippingStage.setSampleRate(sampleRate);
-    //clippingStage.setDistortion(0.5f);
+    clippingStage.setDistortion(0.5f);
 }
 
 void TubeScreamerAudioProcessor::releaseResources()
@@ -150,17 +152,24 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     float* right = buffer.getWritePointer(1);
 
     // get UI params
-    float inGain = pow(10, *gain / 20.0f);
-    float outGain = pow(10, *out / 20.0f);
+    //float inGain = pow(10, *gain / 20.0f);
+    float inGain = 1.0f;
+
+    float dist = *distortion/10.0f;
+    dist = pow(10, jmap(dist, 0.0f, 5.7f));
+    clippingStage.setDistortion(dist);
+
+    float outGain = *out / 10.0f;
+    //float outGain = pow(10, *out / 2.0f)/1e5f;
 
     // Clipping stage
     for (int i = 0; i < numSamples; i++)
     {
         // for testing
         //left[i] = sineOsc.process();
-        left[i] *= 0.1f;
+        //left[i] *= 0.1f;
         // process audio
-        left[i] = outGain * clippingStage.process(inGain * left[i]);
+        left[i] = 0.95 * outGain * clippingStage.process(inGain * left[i]);
         right[i] = left[i];
     }
 

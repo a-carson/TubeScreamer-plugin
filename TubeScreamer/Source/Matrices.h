@@ -108,6 +108,8 @@ public:
 		A(0, 0) = a;
 		return A;
 	}
+
+	// Homemade Matrix Class
 /*Copies b to a*/
 	void copyTo(temp a[3][1], temp b[3][1])
 	{
@@ -126,6 +128,21 @@ public:
 				c[i][0] += a[i][j] * b[j][0];
 		}
 	}
+
+	void multiply3x3by3x3(temp a[3][3], temp b[3][3], temp c[3][3])
+	{
+
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				c[i][j] = 0.0f;
+				for (int k = 0; k < 3; k++)
+					c[i][j] += a[i][k] * b[k][j];
+			}
+		}
+	}
+
 	/*adds b to a*/
 	void add3x1s(temp a[3][1], temp b[3][1])
 	{
@@ -145,6 +162,17 @@ public:
 		return c;
 	}
 
+	void multiply1x3by3x3(temp a[3], temp b[3][3], temp c[3])
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			c[i] = 0.0f;
+				for (int j = 0; j < 3; j++)
+				{
+					c[i] += a[j] * b[j][i];
+				}
+		}
+	}
 
 	void invert3x3(temp a[3][3])
 	{
@@ -177,7 +205,6 @@ public:
 
 
 #endif // !Matrices_h
-
 
 
 

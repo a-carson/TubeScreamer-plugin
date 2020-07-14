@@ -58,6 +58,7 @@ public:
 
 private:
     std::atomic <float>* gain;
+    std::atomic <float>* distortion;
     std::atomic <float>* out;
     AudioProcessorValueTreeState parameters;
     TSClippingStage<float> clippingStage;
