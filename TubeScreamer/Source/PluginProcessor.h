@@ -70,6 +70,10 @@ private:
     TSClippingStage<float> clippingStage;
     TSTone<float> toneStage;
     SineOsc sineOsc;
+    int os = 2;
+    Oversampling<float> overSampling{ (size_t)2, (size_t)os, 
+                                    Oversampling<float>::filterHalfBandPolyphaseIIR , true, true };
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TubeScreamerAudioProcessor)
 };

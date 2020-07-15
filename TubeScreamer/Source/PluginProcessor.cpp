@@ -12,14 +12,14 @@
 //==============================================================================
 TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
-                       ),
+    : AudioProcessor(BusesProperties()
+#if ! JucePlugin_IsMidiEffect
+#if ! JucePlugin_IsSynth
+        .withInput("Input", juce::AudioChannelSet::stereo(), true)
+#endif
+        .withOutput("Output", juce::AudioChannelSet::stereo(), true)
+#endif
+    ),
 #endif
     parameters(*this, nullptr, "ParamTreeIdentifier", {
     //std::make_unique < AudioParameterFloat >("gain", "Gain", -10.0f, 35.0f , 0.0f) ,
@@ -27,6 +27,7 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
     std::make_unique < AudioParameterFloat >("tone", "Tone", 0.0f, 10.0f, 5.0f),
     std::make_unique < AudioParameterFloat >("output", "Level", 0.0f, 10.0f, 5.0f),
         })
+
 {
     gain = parameters.getRawParameterValue("gain");
     out = parameters.getRawParameterValue("output");
@@ -36,6 +37,7 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
 
 TubeScreamerAudioProcessor::~TubeScreamerAudioProcessor()
 {
+    
 }
 
 //==============================================================================
@@ -104,20 +106,24 @@ void TubeScreamerAudioProcessor::changeProgramName (int index, const juce::Strin
 void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Sine Osc - for testing only
-    sineOsc.setSampleRate(sampleRate);
+    float fs = sampleRate * overSampling.getOversamplingFactor();
+    sineOsc.setSampleRate(fs);
     sineOsc.setFrequency(220.0f);
 
     // Input High Pass
-    highPass1.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.9));
-    highPass2.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.6));
+    highPass1.setCoefficients(IIRCoefficients::makeHighPass(fs, 15.9));
+    highPass2.setCoefficients(IIRCoefficients::makeHighPass(fs, 15.6));
 
     // Clipping
-    clippingStage.setSampleRate(sampleRate);
+    clippingStage.setSampleRate(fs);
     clippingStage.setDistortion(0.5f);
 
     // Tone
-    toneStage.setSampleRate(sampleRate);
+    toneStage.setSampleRate(fs);
     toneStage.setTone(1.0f);
+
+    overSampling.initProcessing(samplesPerBlock);
+
 }
 
 void TubeScreamerAudioProcessor::releaseResources()
@@ -158,27 +164,27 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-
-    // Get Buffer ----------------------------------------------
-    int numSamples = buffer.getNumSamples();
-    float* left = buffer.getWritePointer(0);
-    float* right = buffer.getWritePointer(1);
-
     // UI Params -----------------------------------------------
-    //inGain = pow(10, *gain / 20.0f);
     // Distortion
-    float dist = *distortion/10.0f;
+    float dist = *distortion / 10.0f;
     dist = pow(10, jmap(dist, 0.0f, 5.7f));
     clippingStage.setDistortion(dist);
-
     // Tone
     toneStage.setTone(*tone / 10.0f);
-
     // Level
     float outGain = *out / 10.0f;
 
-    // Process Audio ---------------------------------------------
-    for (int i = 0; i < numSamples; i++)
+
+    // Upsample -------------------------------------------------
+    AudioBlock<float> block{ buffer };
+    AudioBlock<float> upsampledBlock = overSampling.processSamplesUp(block);
+
+    // Get pointer to block -------------------------------------
+    float* left = upsampledBlock.getChannelPointer(0);
+    float* right = upsampledBlock.getChannelPointer(1);
+
+    // Process Audio --------------------------------------------
+    for (int i = 0; i < upsampledBlock.getNumSamples(); i++)
     {
         // Sine wave - for testing only
         //left[i] = 0.1f * sineOsc.process();
@@ -189,10 +195,11 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         float clipOut = clippingStage.process(inGain * highPassOut);
         float toneOut = 0.95 * outGain * toneStage.processSingleSample(clipOut);
         left[i] = toneOut;
-        right[i] = toneOut;
+        right[i] = left[i];
     }
 
-
+    // Downsample -----------------------------
+    overSampling.processSamplesDown(block);
 }
 
 //==============================================================================
