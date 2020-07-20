@@ -82,21 +82,29 @@ public:
 
 
 	// Main Process
-	temp process(temp in)
+	temp process(temp in, bool useLut)
 	{
 		// Input
 		const temp p = matTool.multiply1x3by3x1(G_, x) + H_ * in;
-
-		// initial guess
-		v = Ni * Vt * asinhf(p / (2 * Is * K_));
-
-		// newtons method
-		v = cappedNewton(v, p);
-		temp iv = (v - p) / K_;
+		temp iv = 0.0;
+		temp ad = 0.0f;
+		if (useLut)
+		{
+			ad = lookUp(pLut, adLut, p);
+			if (fabsf(p-pPrev) > 1.0e-8f)
+				iv = (ad - adPrev) / (p - pPrev);
+			else
+				iv = lookUp(pLut, iLut, 0.5 * (p + pPrev));
+		}
+		else
+		{
+			v = Ni * Vt * asinhf(p / (2 * Is * K_));
+			v = cappedNewton(v, p);
+			iv = (v - p) / K_;
+		}
 
 		// update state variable
 		matTool.copyTo(x_prev, x);
-
 		temp x_int[3][1];
 		matTool.multiply3x3by3x1(A_, x_prev, x_int);
 		for (int i = 0; i < 3; i++)
@@ -119,11 +127,90 @@ public:
 			}
 		}
 
+		pPrev = p;
+		adPrev = ad;
 		return out;
 	}
 
-private:
+	void makeLookUpTable(size_t numPoints, temp fs, temp pmax, temp distortion)
+	{
+		N = numPoints;
+		pLut = new float[N];
+		iLut = new float[N];
+		adLut = new float[N];
 
+		setSampleRate(fs/1.5);
+		setDistortion(distortion);
+
+		temp dP = 2.0 * pmax / (temp)(N - 1);
+		temp p0 = -1.0 * pmax;
+		temp p1 = p0;
+		temp y = 0.0;
+
+		// f(p) look-up table
+		for (int i = 0; i < N; i++)
+		{
+			p0 = -pmax + i * dP;
+			pLut[i] = p0;
+			y = cappedNewton(y, p0);
+			iLut[i] = (y - p0) / K_;
+		}
+
+		// Trapezoid Integration - ad(p) look-up table
+		temp ad = 0.0;
+		p1 = -pmax;
+		temp i0 = lookUp(pLut, iLut, 0.0);
+		for (int i = 0; i < N; i++)
+		{
+			iLut[i] -= i0;
+
+			if (i > 0)
+				ad += 0.5 * dP * (iLut[i] + iLut[i-1]);
+			adLut[i] = ad;
+		}
+
+		// Adjust offset
+		temp ad0 = lookUp(pLut, adLut, 0.0);
+		for (int i = 0; i < N; i++)
+			adLut[i] -= ad0;
+		
+	}
+
+	temp lookUp(temp* x, temp* y, temp xq)
+	{
+		int indices[4] = { -1, 0, 1, 2 };
+		temp indBet = (xq - x[0]) / (x[1] - x[0]);
+		int indBetFloored = floorf(indBet);
+		
+		for (int i = 0; i < 4; i++)
+			indices[i] += indBetFloored;
+
+
+		if (indices[3] > (N-1))
+			for (int i = 0; i < 4; i++)
+				indices[i] -= indices[3] - N + 1;
+
+		if (indices[0] < 0)
+			for (int i = 0; i < 4; i++)
+				indices[3-i] -= indices[0];
+		
+
+		temp alpha = indBet - indices[2] + 0.5;
+
+		temp P[4] = { (alpha + 0.5) * (alpha - 0.5) * (alpha - 1.5) / -6.0 ,
+		(alpha + 1.5)* (alpha - 0.5)* (alpha - 1.5) / 2.0,
+		(alpha + 0.5)* (alpha - 1.5)* (alpha + 1.5) / -2.0,
+		(alpha + 0.5)* (alpha - 0.5)* (alpha + 1.5) / 6.0 };
+
+		temp yq = 0.0;
+
+		for (int i = 0; i < 4; i++)
+			yq += P[i] * y[indices[i]];
+
+		return yq;
+	}
+
+	private:
 	/*Capped Newtons method*/
 	temp cappedNewton(temp y, temp p)
 	{
@@ -241,6 +328,10 @@ private:
 	// voltage across diodes
 	temp v = 0.0f;
 
+	// anti-derivs
+	temp adPrev = 0.0f;
+	temp pPrev = 0.0f;
+
 	// Circuit parameters
 	temp r1 = 10e3f;
 	temp r2 = 51e3 + 500e3;
@@ -265,23 +356,58 @@ private:
 	temp E = 1.0f;
 	temp G[3] = { 0.0f, 1.0f, 0.0f };
 
-	temp A_[3][3], B_[3][1], C_[3][1], D_[3], E_, F_, G_[3], H_, K_, I[3][3], Z[3][3];
-	//temp A_[3][3] = { { 0.997918834547347f,  0.0f ,  0.0f },
-	//{	-60.490777826210604f,  0.459122653674072f ,  -60.553789053112894f },
-	//{	-0.089970406484047f ,  0.0f,  0.909935874342532f } };
-	//temp B_[3][1] = { { 0.002081165452653f},{60.490777826210596f},{0.089970406484047f } };
-	//temp C_[3][1] = { { 0.0f},{-298023.4178255865f},{0.0f } };
-	//temp D_[3] = { -31.244348330378976f,   0.729561326837036f,-30.276894526556443 };
-	//temp E_ = 31.244348330378973f;
-	//temp F_ = -149011.7089127933f;
-	//temp G_[3] = { -30.245388913105302f,   0.729561326837036f, -30.276894526556443 };
-	//temp H_ = 30.245388913105298f;
-	//temp K_ = -149011.7089127933f;
+	temp A_[3][3], B_[3][1], C_[3][1], D_[3], E_, F_, G_[3], H_, I[3][3], K_, Z[3][3];
 
 	// Newton raphson parameters
 	temp cap;// = Ni * Vt * acoshf(-Ni * Vt / (2 * Is * K_));
 	const temp tol = 1e-7f;						// tolerance
 	const unsigned int maxIters = 50;  // maximum number of iterations
 	const unsigned int maxSubIter = 5;
+
+	// look-up table
+	temp* pLut;
+	temp* iLut;
+	temp* adLut;
+	size_t N;
+};
+
+template<class temp>
+class LookUpTable
+{
+public:
+	LookUpTable(size_t numPoints)
+	{
+		N = numPoints;
+		p = new float[N];
+		f = new float[N];
+		ad1 = new float[N];
+	}
+
+	void generate(temp fs, temp pmax, temp distortion)
+	{
+		ts.setSampleRate(fs);
+		ts.setDistortion(distortion);
+
+		temp dP = 2.0 * pmax / (temp)(N - 1);
+		temp p0 = -1.0 * pmax;
+		temp p1 = p0;
+		temp y = 0.0;
+		
+		for (int i = 0; i < N; i++)
+		{
+			p0 = -pmax + i * dP;
+			p[i] = p0;
+			y = ts.dampedNewton(y, p0);
+			f[i] = (y - p0) / model.K_;
+			DBG(f[i]);
+		}
+	}
+
+private:
+	temp* p;
+	temp* f;
+	temp* ad1;
+	size_t N;
+	TSClippingStage<temp> ts;
 };
 #endif // !TSClippingStage_h

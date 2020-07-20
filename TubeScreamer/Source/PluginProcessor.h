@@ -63,16 +63,19 @@ private:
     std::atomic <float>* distortion;
     std::atomic <float>* tone;
     std::atomic <float>* out;
+    std::atomic <float>* isLut;
     float inGain = 1.0f;
 
     IIRFilter highPass1;
     IIRFilter highPass2;
     TSClippingStage<float> clippingStage;
+
     TSTone<float> toneStage;
     SineOsc sineOsc;
-    int os = 2;
+    int os = 1;
     Oversampling<float> overSampling{ (size_t)2, (size_t)os, 
                                     Oversampling<float>::filterHalfBandPolyphaseIIR , true, true };
+
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TubeScreamerAudioProcessor)

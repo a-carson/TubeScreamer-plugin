@@ -26,6 +26,7 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
     std::make_unique < AudioParameterFloat >("dist", "Distortion", 0.0f, 10.0f, 5.0f),
     std::make_unique < AudioParameterFloat >("tone", "Tone", 0.0f, 10.0f, 5.0f),
     std::make_unique < AudioParameterFloat >("output", "Level", 0.0f, 10.0f, 5.0f),
+    std::make_unique < AudioParameterBool >("lut", "Lut", 1),
         })
 
 {
@@ -33,6 +34,7 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
     out = parameters.getRawParameterValue("output");
     distortion = parameters.getRawParameterValue("dist");
     tone = parameters.getRawParameterValue("tone");
+    isLut = parameters.getRawParameterValue("lut");
 }
 
 TubeScreamerAudioProcessor::~TubeScreamerAudioProcessor()
@@ -116,14 +118,14 @@ void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
 
     // Clipping
     clippingStage.setSampleRate(fs);
-    clippingStage.setDistortion(0.5f);
+    clippingStage.setDistortion(500.0e3);
+    clippingStage.makeLookUpTable(1024, fs, 10.0f, 500.0e3);
 
     // Tone
     toneStage.setSampleRate(fs);
     toneStage.setTone(1.0f);
 
     overSampling.initProcessing(samplesPerBlock);
-
 }
 
 void TubeScreamerAudioProcessor::releaseResources()
@@ -192,7 +194,7 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         // Process Audio
         float highPassOut = highPass1.processSingleSampleRaw(left[i]);
         highPassOut = highPass2.processSingleSampleRaw(highPassOut);
-        float clipOut = clippingStage.process(inGain * highPassOut);
+        float clipOut = clippingStage.process(inGain * highPassOut, (int)*isLut);
         float toneOut = 0.95 * outGain * toneStage.processSingleSample(clipOut);
         left[i] = toneOut;
         right[i] = left[i];
@@ -205,12 +207,12 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 //==============================================================================
 bool TubeScreamerAudioProcessor::hasEditor() const
 {
-    return false; // (change this to false if you choose to not supply an editor)
+    return true; // (change this to false if you choose to not supply an editor)
 }
 
 juce::AudioProcessorEditor* TubeScreamerAudioProcessor::createEditor()
 {
-    return new TubeScreamerAudioProcessorEditor (*this);
+    return new GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
