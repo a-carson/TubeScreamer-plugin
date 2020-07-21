@@ -172,38 +172,34 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // UI Params -----------------------------------------------
 
     // Distortion
-    float dist = *distortion / 10.0f;
-    dist = pow(10, jmap(dist, 0.0f, 5.69897f));
+    float dist = pow(10, jmap(distortionVal, 0.0f, 5.69897f));
     noAA.setDistortion(dist);
     antiAliased.setDistortion(dist);
 
     // Tone
-    toneStage.setTone(*tone / 10.01f);
+    toneStage.setTone(toneVal);
 
     // Level
-    float outGain = *out / 10.0f;
+    float outGain = level;
 
-    // Input High pass filters
+    // Input High pass filters ---------------------------------
     float* samples = buffer.getWritePointer(0);
     highPass1.processSamples(samples, buffer.getNumSamples());
     highPass2.processSamples(samples, buffer.getNumSamples());
     
-
-    // Upsample -------------------------------------------------
+    // Non-linearity -------------------------------------------
+    
+    // Upsample
     AudioBlock<float> block{ buffer };
     AudioBlock<float> upsampledBlock = overSampling.processSamplesUp(block);
-
-    // Get pointer to block -------------------------------------
     float* newSamples = upsampledBlock.getChannelPointer(0);
-    //float* right = upsampledBlock.getChannelPointer(1);
 
-    // Process Audio --------------------------------------------
+    // Loop
     for (int i = 0; i < upsampledBlock.getNumSamples(); i++)
     {
         // Sine wave - for testing only
         //newSamples[i] = 0.01f * sineOsc.process();
 
-        // Process Audio
         float regularOut = noAA.process(inGain * newSamples[i], 1);
         float aaOut = antiAliased.antiAliasedProcess(inGain * newSamples[i]);
 
@@ -211,17 +207,15 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             newSamples[i] = outGain * aaOut;
         else
             newSamples[i] = outGain * regularOut;
-
-        //newSamples[i] = 0.95 * outGain * toneStage.processSingleSample(newSamples[i]);
-
     }
 
-    // Downsample -----------------------------
+    // Downsample
     overSampling.processSamplesDown(block);
 
-    // Tone Stage
+    // Tone Stage -------------------------------------------
     float* downSamples = buffer.getWritePointer(0);
     toneStage.processBlock(downSamples, buffer.getNumSamples());
+
 
 
     // Copy to all output channels
@@ -233,7 +227,6 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             channelData[i] = downSamples[i];
     }
 
-    
 }
 
 //==============================================================================
@@ -244,7 +237,7 @@ bool TubeScreamerAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* TubeScreamerAudioProcessor::createEditor()
 {
-    return new GenericAudioProcessorEditor(*this);
+    return new TubeScreamerAudioProcessorEditor(*this);
 }
 
 //==============================================================================

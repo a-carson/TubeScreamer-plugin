@@ -172,7 +172,6 @@ public:
 	/*Regular process - without any aliasing mitigation*/
 	temp process(temp in, bool useLut)
 	{
-
 		// Input
 		const temp p = matTool.multiply1x3by3x1(G_, x) + H_ * in;
 
@@ -361,6 +360,7 @@ public:
 	temp x[3][1] = { { 0.0 }, { 0.0 }, { 0.0 } };
 	temp xPrev[3][1] = { { 0.0 }, { 0.0 }, { 0.0 } };
 	temp x2Prev[3][1] = { { 0.0 }, { 0.0 }, { 0.0 } };
+
 	// voltage across diodes
 	temp v = 0.0;
 
@@ -396,8 +396,8 @@ public:
 	temp A_[3][3], B_[3][1], C_[3][1], D_[3], E_, F_, G_[3], H_, I[3][3], K_, Z[3][3];
 
 	// Newton raphson parameters
-	temp cap;// = Ni * Vt * acoshf(-Ni * Vt / (2 * Is * K_));
-	const temp tol = 1e-7;						// tolerance
+	temp cap;
+	const temp tol = 1e-7;			   // tolerance
 	const unsigned int maxIters = 50;  // maximum number of iterations
 	const unsigned int maxSubIter = 5;
 

@@ -57,7 +57,11 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    float distortionVal;
+    float level;
+    float toneVal;
 private:
+    // UI Params
     AudioProcessorValueTreeState parameters;
     std::atomic <float>* gain;
     std::atomic <float>* distortion;
@@ -65,18 +69,27 @@ private:
     std::atomic <float>* out;
     std::atomic <float>* isAa;
     double inGain = 1.0;
+    SmoothedValue<float> distortionSmoothed;
+    SmoothedValue<float> toneSmoothed;
+    SmoothedValue<float> outputGainSmoothed;
 
+
+    // Input high pass filters
     IIRFilter highPass1;
     IIRFilter highPass2;
+
+    // Nonlinearities
     TSClippingStage<double> noAA;
     TSClippingStage<double> antiAliased;
-    TSTone<float> toneStage;
-    SineOsc sineOsc;
     int os = 1;
-    Oversampling<float> overSampling{ (size_t)2, (size_t)os, 
+    Oversampling<float> overSampling{ (size_t)2, (size_t)os,
                                     Oversampling<float>::filterHalfBandPolyphaseIIR , true, true };
 
+    // Tone Stage
+    TSTone<float> toneStage;
 
+    // Sine input for testing
+    SineOsc sineOsc;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TubeScreamerAudioProcessor)
 };
