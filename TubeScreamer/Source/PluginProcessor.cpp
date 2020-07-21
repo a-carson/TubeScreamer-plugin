@@ -110,23 +110,24 @@ void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     // Sine Osc - for testing only
     float fs = sampleRate * overSampling.getOversamplingFactor();
     sineOsc.setSampleRate(fs);
-    sineOsc.setFrequency(5000.0f);
+    sineOsc.setFrequency(1000.0);
 
     // Input High Pass
-    highPass1.setCoefficients(IIRCoefficients::makeHighPass(fs, 15.9));
-    highPass2.setCoefficients(IIRCoefficients::makeHighPass(fs, 15.6));
+    highPass1.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.9));
+    highPass2.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.6));
 
     // Clipping
     noAA.setSampleRate(fs);
     noAA.setDistortion(500.0e3);
-    noAA.makeLookUpTable(8192, fs, 10.0f, 1.0);
-    antiAliased.makeLookUpTable(1024, fs/1.5, 10.0f, 1.0);
+    noAA.makeLookUpTable(8192, fs, 10.0f, 500.0e3);
+    antiAliased.makeLookUpTable(1024, fs/1.5, 10.0f, 500.0e3);
 
     // Tone
-    toneStage.setSampleRate(fs);
+    toneStage.setSampleRate(sampleRate);
     toneStage.setTone(1.0f);
 
     overSampling.initProcessing(samplesPerBlock);
+
 }
 
 void TubeScreamerAudioProcessor::releaseResources()
@@ -167,50 +168,72 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
+
     // UI Params -----------------------------------------------
+
     // Distortion
     float dist = *distortion / 10.0f;
-    dist = pow(10, jmap(dist, 0.0f, 5.69897f))/pow(10, 5.69897f);
+    dist = pow(10, jmap(dist, 0.0f, 5.69897f));
     noAA.setDistortion(dist);
     antiAliased.setDistortion(dist);
 
     // Tone
-    toneStage.setTone(*tone / 10.0f);
+    toneStage.setTone(*tone / 10.01f);
+
     // Level
     float outGain = *out / 10.0f;
 
+    // Input High pass filters
+    float* samples = buffer.getWritePointer(0);
+    highPass1.processSamples(samples, buffer.getNumSamples());
+    highPass2.processSamples(samples, buffer.getNumSamples());
+    
 
     // Upsample -------------------------------------------------
     AudioBlock<float> block{ buffer };
     AudioBlock<float> upsampledBlock = overSampling.processSamplesUp(block);
 
     // Get pointer to block -------------------------------------
-    float* left = upsampledBlock.getChannelPointer(0);
-    float* right = upsampledBlock.getChannelPointer(1);
+    float* newSamples = upsampledBlock.getChannelPointer(0);
+    //float* right = upsampledBlock.getChannelPointer(1);
 
     // Process Audio --------------------------------------------
     for (int i = 0; i < upsampledBlock.getNumSamples(); i++)
     {
         // Sine wave - for testing only
-        //left[i] = 0.1f * sineOsc.process();
+        //newSamples[i] = 0.01f * sineOsc.process();
 
         // Process Audio
-        float clipOut;
-        float noneOut = noAA.process(inGain * left[i], 1);
-        float aaOut = antiAliased.antiAliasedProcess(inGain * left[i]);
+        float regularOut = noAA.process(inGain * newSamples[i], 1);
+        float aaOut = antiAliased.antiAliasedProcess(inGain * newSamples[i]);
 
         if ((int)*isAa)
-            clipOut = aaOut;
+            newSamples[i] = outGain * aaOut;
         else
-            clipOut = noneOut;
-        
-        float toneOut = 0.95 * outGain * toneStage.processSingleSample(clipOut);
-        left[i] = toneOut;
-        right[i] = left[i];
+            newSamples[i] = outGain * regularOut;
+
+        //newSamples[i] = 0.95 * outGain * toneStage.processSingleSample(newSamples[i]);
+
     }
 
     // Downsample -----------------------------
     overSampling.processSamplesDown(block);
+
+    // Tone Stage
+    float* downSamples = buffer.getWritePointer(0);
+    toneStage.processBlock(downSamples, buffer.getNumSamples());
+
+
+    // Copy to all output channels
+    for (int channel = 0; channel < totalNumInputChannels; channel++)
+    {
+        auto* channelData = buffer.getWritePointer(channel);
+
+        for (int i = 0; i < buffer.getNumSamples(); i++)
+            channelData[i] = downSamples[i];
+    }
+
+    
 }
 
 //==============================================================================

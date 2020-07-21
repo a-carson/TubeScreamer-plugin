@@ -26,7 +26,7 @@ public:
 	/*Set distortion amount of pedal*/
 	void setDistortion(temp distortion)
 	{
-		r2 = 51e3 + distortion*500e3;
+		r2 = 51e3 + distortion;
 		A[1][1] = -1.0f / (r2 * c2);
 		updateStateSpaceArrays();
 	}

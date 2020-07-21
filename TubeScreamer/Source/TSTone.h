@@ -58,6 +58,7 @@ public:
 			a[2-i] /= a[0];
 		}
 
+		filter.setCoefficients(IIRCoefficients(b[0], b[1], b[2], a[0], a[1], a[2]));
 	}
 
 	/*IIR Filter*/
@@ -71,6 +72,11 @@ public:
 		y2 = b[2] * in - a[2] * out;
 
 		return out;
+	}
+
+	void processBlock(temp* samples, int numSamples)
+	{
+		filter.processSamples(samples, numSamples);
 	}
 
 private:
@@ -94,5 +100,7 @@ private:
 	temp y1 = 0.0f;
 	temp y2 = 0.0f;
 	temp c;				// for bilinear tranform
+
+	IIRFilter filter;
 };
 #endif // !TSTone_h
