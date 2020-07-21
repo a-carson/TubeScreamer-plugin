@@ -146,7 +146,7 @@ public:
 	/*adds b to a*/
 	void add3x1s(temp a[3][1], temp b[3][1])
 	{
-		for (int i = 0; i < 3 i++)
+		for (int i = 0; i < 3; i++)
 			a[i][0] += b[i][0];
 	}
 
@@ -199,6 +199,17 @@ public:
 				a[i][j] = powf(-1, 3 * i + j) * b[j][i];
 				a[i][j] /= det;
 			}		
+	}
+
+	temp* addVectors(temp* a, temp* b, size_t length)
+	{
+		temp *c = a;
+		for (int i = 0; i < length; i++)
+		{
+			c[i] = a[i] + b[i];
+		}
+
+		return c;
 	}
 };
 

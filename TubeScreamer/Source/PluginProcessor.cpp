@@ -26,7 +26,7 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
     std::make_unique < AudioParameterFloat >("dist", "Distortion", 0.0f, 10.0f, 5.0f),
     std::make_unique < AudioParameterFloat >("tone", "Tone", 0.0f, 10.0f, 5.0f),
     std::make_unique < AudioParameterFloat >("output", "Level", 0.0f, 10.0f, 5.0f),
-    std::make_unique < AudioParameterBool >("lut", "Lut", 1),
+    std::make_unique < AudioParameterBool >("aa", "Anti-aliasing", 1),
         })
 
 {
@@ -34,7 +34,7 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
     out = parameters.getRawParameterValue("output");
     distortion = parameters.getRawParameterValue("dist");
     tone = parameters.getRawParameterValue("tone");
-    isLut = parameters.getRawParameterValue("lut");
+    isAa = parameters.getRawParameterValue("aa");
 }
 
 TubeScreamerAudioProcessor::~TubeScreamerAudioProcessor()
@@ -110,16 +110,17 @@ void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     // Sine Osc - for testing only
     float fs = sampleRate * overSampling.getOversamplingFactor();
     sineOsc.setSampleRate(fs);
-    sineOsc.setFrequency(220.0f);
+    sineOsc.setFrequency(5000.0f);
 
     // Input High Pass
     highPass1.setCoefficients(IIRCoefficients::makeHighPass(fs, 15.9));
     highPass2.setCoefficients(IIRCoefficients::makeHighPass(fs, 15.6));
 
     // Clipping
-    clippingStage.setSampleRate(fs);
-    clippingStage.setDistortion(500.0e3);
-    clippingStage.makeLookUpTable(1024, fs, 10.0f, 500.0e3);
+    noAA.setSampleRate(fs);
+    noAA.setDistortion(500.0e3);
+    noAA.makeLookUpTable(8192, fs, 10.0f, 1.0);
+    antiAliased.makeLookUpTable(1024, fs/1.5, 10.0f, 1.0);
 
     // Tone
     toneStage.setSampleRate(fs);
@@ -169,8 +170,10 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // UI Params -----------------------------------------------
     // Distortion
     float dist = *distortion / 10.0f;
-    dist = pow(10, jmap(dist, 0.0f, 5.7f));
-    clippingStage.setDistortion(dist);
+    dist = pow(10, jmap(dist, 0.0f, 5.69897f))/pow(10, 5.69897f);
+    noAA.setDistortion(dist);
+    antiAliased.setDistortion(dist);
+
     // Tone
     toneStage.setTone(*tone / 10.0f);
     // Level
@@ -192,9 +195,15 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         //left[i] = 0.1f * sineOsc.process();
 
         // Process Audio
-        float highPassOut = highPass1.processSingleSampleRaw(left[i]);
-        highPassOut = highPass2.processSingleSampleRaw(highPassOut);
-        float clipOut = clippingStage.process(inGain * highPassOut, (int)*isLut);
+        float clipOut;
+        float noneOut = noAA.process(inGain * left[i], 1);
+        float aaOut = antiAliased.antiAliasedProcess(inGain * left[i]);
+
+        if ((int)*isAa)
+            clipOut = aaOut;
+        else
+            clipOut = noneOut;
+        
         float toneOut = 0.95 * outGain * toneStage.processSingleSample(clipOut);
         left[i] = toneOut;
         right[i] = left[i];

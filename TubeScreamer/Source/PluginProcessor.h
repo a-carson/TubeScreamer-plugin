@@ -63,16 +63,16 @@ private:
     std::atomic <float>* distortion;
     std::atomic <float>* tone;
     std::atomic <float>* out;
-    std::atomic <float>* isLut;
+    std::atomic <float>* isAa;
     float inGain = 1.0f;
 
     IIRFilter highPass1;
     IIRFilter highPass2;
-    TSClippingStage<float> clippingStage;
-
+    TSClippingStage<double> noAA;
+    TSClippingStage<double> antiAliased;
     TSTone<float> toneStage;
     SineOsc sineOsc;
-    int os = 1;
+    int os = 2;
     Oversampling<float> overSampling{ (size_t)2, (size_t)os, 
                                     Oversampling<float>::filterHalfBandPolyphaseIIR , true, true };
 
