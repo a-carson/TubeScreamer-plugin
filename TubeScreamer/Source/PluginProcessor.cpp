@@ -23,9 +23,9 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
 #endif
     parameters(*this, nullptr, "ParamTreeIdentifier", {
     //std::make_unique < AudioParameterFloat >("gain", "Gain", -10.0f, 35.0f , 0.0f) ,
-    std::make_unique < AudioParameterFloat >("dist", "Distortion", 0.0f, 10.0f, 5.0f),
-    std::make_unique < AudioParameterFloat >("tone", "Tone", 0.0f, 10.0f, 5.0f),
-    std::make_unique < AudioParameterFloat >("output", "Level", 0.0f, 10.0f, 5.0f),
+    std::make_unique < AudioParameterFloat >("dist", "Distortion", 0.0f, 1.0f, 0.5f),
+    std::make_unique < AudioParameterFloat >("tone", "Tone", 0.0f, 1.0f, 0.5f),
+    std::make_unique < AudioParameterFloat >("output", "Level", 0.0f, 1.0f, 0.5f),
     std::make_unique < AudioParameterBool >("aa", "Anti-aliasing", 1),
         })
 
@@ -110,7 +110,7 @@ void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     // Sine Osc - for testing only
     float fs = sampleRate * overSampling.getOversamplingFactor();
     sineOsc.setSampleRate(fs);
-    sineOsc.setFrequency(1000.0);
+    sineOsc.setFrequency(5000.0);
 
     // Input High Pass
     highPass1.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.9));
@@ -170,63 +170,63 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         buffer.clear (i, 0, buffer.getNumSamples());
 
     // UI Params -----------------------------------------------
-
     // Distortion
-    float dist = pow(10, jmap(distortionVal, 0.0f, 5.69897f));
+    float dist = pow(10, *distortion*5.69897f);
     noAA.setDistortion(dist);
     antiAliased.setDistortion(dist);
 
     // Tone
-    toneStage.setTone(toneVal);
+    toneStage.setTone(*tone);
 
     // Level
-    float outGain = level;
+    float outGain = *out;
 
-    // Input High pass filters ---------------------------------
-    float* samples = buffer.getWritePointer(0);
-    highPass1.processSamples(samples, buffer.getNumSamples());
-    highPass2.processSamples(samples, buffer.getNumSamples());
-    
-    // Non-linearity -------------------------------------------
-    
-    // Upsample
-    AudioBlock<float> block{ buffer };
-    AudioBlock<float> upsampledBlock = overSampling.processSamplesUp(block);
-    float* newSamples = upsampledBlock.getChannelPointer(0);
-
-    // Loop
-    for (int i = 0; i < upsampledBlock.getNumSamples(); i++)
+    if (isOn)
     {
-        // Sine wave - for testing only
-        //newSamples[i] = 0.01f * sineOsc.process();
+        // Input High pass filters ---------------------------------
+        float* samples = buffer.getWritePointer(0);
+        highPass1.processSamples(samples, buffer.getNumSamples());
+        highPass2.processSamples(samples, buffer.getNumSamples());
 
-        float regularOut = noAA.process(inGain * newSamples[i], 1);
-        float aaOut = antiAliased.antiAliasedProcess(inGain * newSamples[i]);
+        // Non-linearity -------------------------------------------
 
-        if ((int)*isAa)
-            newSamples[i] = outGain * aaOut;
-        else
-            newSamples[i] = outGain * regularOut;
+        // Upsample
+        AudioBlock<float> block{ buffer };
+        AudioBlock<float> upsampledBlock = overSampling.processSamplesUp(block);
+        float* newSamples = upsampledBlock.getChannelPointer(0);
+
+        // Loop
+        for (int i = 0; i < upsampledBlock.getNumSamples(); i++)
+        {
+            // Sine wave - for testing only
+            newSamples[i] = 0.1f * sineOsc.process();
+
+            float regularOut = noAA.process(inGain * newSamples[i], 0);
+            float aaOut = antiAliased.antiAliasedProcess(inGain * newSamples[i]);
+
+            if ((int)*isAa)
+                newSamples[i] = outGain * aaOut;
+            else
+                newSamples[i] = outGain * regularOut;
+        }
+
+        // Downsample
+        overSampling.processSamplesDown(block);
+
+        // Tone Stage -------------------------------------------
+        float* downSamples = buffer.getWritePointer(0);
+        toneStage.processBlock(downSamples, buffer.getNumSamples());
+
+
+        // Copy to all output channels
+        for (int channel = 0; channel < totalNumInputChannels; channel++)
+        {
+            auto* channelData = buffer.getWritePointer(channel);
+
+            for (int i = 0; i < buffer.getNumSamples(); i++)
+                channelData[i] = downSamples[i];
+        }
     }
-
-    // Downsample
-    overSampling.processSamplesDown(block);
-
-    // Tone Stage -------------------------------------------
-    float* downSamples = buffer.getWritePointer(0);
-    toneStage.processBlock(downSamples, buffer.getNumSamples());
-
-
-
-    // Copy to all output channels
-    for (int channel = 0; channel < totalNumInputChannels; channel++)
-    {
-        auto* channelData = buffer.getWritePointer(channel);
-
-        for (int i = 0; i < buffer.getNumSamples(); i++)
-            channelData[i] = downSamples[i];
-    }
-
 }
 
 //==============================================================================

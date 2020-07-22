@@ -60,19 +60,21 @@ public:
     float distortionVal;
     float level;
     float toneVal;
-private:
-    // UI Params
-    AudioProcessorValueTreeState parameters;
+    bool isOn;
+
     std::atomic <float>* gain;
     std::atomic <float>* distortion;
     std::atomic <float>* tone;
     std::atomic <float>* out;
     std::atomic <float>* isAa;
+private:
+    // UI Params
+    AudioProcessorValueTreeState parameters;
+
     double inGain = 1.0;
     SmoothedValue<float> distortionSmoothed;
     SmoothedValue<float> toneSmoothed;
     SmoothedValue<float> outputGainSmoothed;
-
 
     // Input high pass filters
     IIRFilter highPass1;
@@ -87,7 +89,6 @@ private:
 
     // Tone Stage
     TSTone<float> toneStage;
-
     // Sine input for testing
     SineOsc sineOsc;
     //==============================================================================

@@ -5,6 +5,7 @@
 #define Oscillator_h
 #include <cmath>
 
+
 /*Generates a sawtooth wave.*/
 class Phasor
 {
@@ -97,7 +98,7 @@ class SineOsc : public Phasor
 {
     float output(float p) override
     {
-        return 0.5f * sin(2.0f * 3.1459 * p);
+        return 0.5f * sin(juce::MathConstants<float>::twoPi * p);
     }
 };
 
