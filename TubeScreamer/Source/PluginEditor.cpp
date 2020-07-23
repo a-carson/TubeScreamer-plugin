@@ -24,6 +24,8 @@ TubeScreamerAudioProcessorEditor::TubeScreamerAudioProcessorEditor(TubeScreamerA
     distortionKnob.addListener(this);
     //sliderValueChanged(&distortionKnob);
 
+
+
     addAndMakeVisible(toneKnob);
     toneKnob.setSliderStyle(juce::Slider::Rotary);
     toneKnob.setRange(0.0f, 1.0f, 0.01f);

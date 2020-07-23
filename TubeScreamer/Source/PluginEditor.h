@@ -69,6 +69,7 @@ public:
     Slider distortionKnob;
 
 private:
+
     void sliderValueChanged(Slider* slider) override;
     void buttonClicked(Button* button) override;
     void pedalOn();

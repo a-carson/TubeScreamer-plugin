@@ -22,11 +22,11 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
     ),
 #endif
     parameters(*this, nullptr, "ParamTreeIdentifier", {
-    //std::make_unique < AudioParameterFloat >("gain", "Gain", -10.0f, 35.0f , 0.0f) ,
     std::make_unique < AudioParameterFloat >("dist", "Distortion", 0.0f, 1.0f, 0.5f),
     std::make_unique < AudioParameterFloat >("tone", "Tone", 0.0f, 1.0f, 0.5f),
     std::make_unique < AudioParameterFloat >("output", "Level", 0.0f, 1.0f, 0.5f),
     std::make_unique < AudioParameterBool >("aa", "Anti-aliasing", 1),
+    std::make_unique < AudioParameterChoice >("clip_type", "Clipping Type", StringArray{ "Asymmetric", "Symmetric"}, 1)
         })
 
 {
@@ -35,6 +35,7 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
     distortion = parameters.getRawParameterValue("dist");
     tone = parameters.getRawParameterValue("tone");
     isAa = parameters.getRawParameterValue("aa");
+    isSymm = parameters.getRawParameterValue("clip_type");
 }
 
 TubeScreamerAudioProcessor::~TubeScreamerAudioProcessor()
@@ -112,15 +113,15 @@ void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     sineOsc.setSampleRate(fs);
     sineOsc.setFrequency(5000.0);
 
-    // Input High Pass
-    highPass1.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.9));
-    highPass2.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.6));
+    // Input and Output High Pass (DC Block)
+    highPassIn.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.6));
+    highPassOut.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 3.0));
 
     // Clipping
-    noAA.setSampleRate(fs);
-    noAA.setDistortion(500.0e3);
-    noAA.makeLookUpTable(8192, fs, 10.0f, 500.0e3);
-    antiAliased.makeLookUpTable(1024, fs/1.5, 10.0f, 500.0e3);
+    regSymm.makeLookUpTable(8192, fs, 10.0, 1.0);
+    regAsymm.makeLookUpTable(8192, fs, 10.0, 1.0);
+    aaSymm.makeLookUpTable(8192, fs / 1.5, 10.0, 1.0);
+    aaAsymm.makeLookUpTable(8192, fs / 1.5, 10.0, 1.0);
 
     // Tone
     toneStage.setSampleRate(sampleRate);
@@ -171,9 +172,10 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     // UI Params -----------------------------------------------
     // Distortion
-    float dist = pow(10, *distortion*5.69897f);
-    noAA.setDistortion(dist);
-    antiAliased.setDistortion(dist);
+    regSymm.setDistortion(*distortion);
+    regAsymm.setDistortion(*distortion);
+    aaSymm.setDistortion(*distortion);
+    aaAsymm.setDistortion(*distortion);
 
     // Tone
     toneStage.setTone(*tone);
@@ -181,12 +183,12 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // Level
     float outGain = *out;
 
+
     if (isOn)
     {
         // Input High pass filters ---------------------------------
         float* samples = buffer.getWritePointer(0);
-        highPass1.processSamples(samples, buffer.getNumSamples());
-        highPass2.processSamples(samples, buffer.getNumSamples());
+        highPassIn.processSamples(samples, buffer.getNumSamples());
 
         // Non-linearity -------------------------------------------
 
@@ -199,15 +201,26 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         for (int i = 0; i < upsampledBlock.getNumSamples(); i++)
         {
             // Sine wave - for testing only
-            newSamples[i] = 0.1f * sineOsc.process();
+            //newSamples[i] = 0.1f * sineOsc.process();
 
-            float regularOut = noAA.process(inGain * newSamples[i], 0);
-            float aaOut = antiAliased.antiAliasedProcess(inGain * newSamples[i]);
 
             if ((int)*isAa)
-                newSamples[i] = outGain * aaOut;
+            { 
+                if ((int)*isSymm > 0)
+                    newSamples[i] = aaSymm.antiAliasedProcess(newSamples[i]);
+                else
+                    newSamples[i] = aaAsymm.antiAliasedProcess(newSamples[i]);
+            }
             else
-                newSamples[i] = outGain * regularOut;
+            {
+                if ((int)*isSymm > 0)
+                    newSamples[i] = regSymm.process(newSamples[i], true);
+                else
+                    newSamples[i] = regAsymm.process(newSamples[i], true);
+            }
+
+
+            newSamples[i] *= outGain;
         }
 
         // Downsample
@@ -216,7 +229,7 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         // Tone Stage -------------------------------------------
         float* downSamples = buffer.getWritePointer(0);
         toneStage.processBlock(downSamples, buffer.getNumSamples());
-
+        highPassOut.processSamples(downSamples, buffer.getNumSamples());
 
         // Copy to all output channels
         for (int channel = 0; channel < totalNumInputChannels; channel++)
@@ -243,15 +256,21 @@ juce::AudioProcessorEditor* TubeScreamerAudioProcessor::createEditor()
 //==============================================================================
 void TubeScreamerAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    auto state = parameters.copyState();
+    std::unique_ptr<XmlElement> xml(state.createXml());
+    copyXmlToBinary(*xml, destData);
 }
 
 void TubeScreamerAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    std::unique_ptr<XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
+    if (xmlState.get() != nullptr)
+    {
+        if (xmlState->hasTagName(parameters.state.getType()))
+        {
+            parameters.replaceState(ValueTree::fromXml(*xmlState));
+        }
+    }
 }
 
 //==============================================================================

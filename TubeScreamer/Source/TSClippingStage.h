@@ -14,10 +14,20 @@ class TSClippingStage
 {
 public:
 
-	TSClippingStage()
+	/*Enumerator class for setting the clipping type*/
+	enum class ClippingType
 	{
+		symmetric,
+		asymmetric
 	};
 
+	TSClippingStage(ClippingType type)
+	{
+		clippingType = type;
+	};
+
+
+	/*Set sample rate*/
 	void setSampleRate(temp sampleRate)
 	{
 		fs = sampleRate;
@@ -26,7 +36,7 @@ public:
 	/*Set distortion amount of pedal*/
 	void setDistortion(temp distortion)
 	{
-		r2 = 51e3 + distortion;
+		r2 = 51e3 + distortion* 500e3;
 		A[1][1] = -1.0f / (r2 * c2);
 		updateStateSpaceArrays();
 	}
@@ -57,7 +67,7 @@ public:
 				AplusI[i][j] = A[i][j] + I[i][j];
 			}
 		}
-		
+
 		// Matrix multiplications
 		matTool.invert3x3(Z);						// Z
 		matTool.multiply3x3by3x3(AplusI, Z, A_);	// A_
@@ -80,7 +90,7 @@ public:
 		}
 
 		// update Newton cap
-		cap = Ni * Vt * acoshf(-Ni * Vt / (2 * Is * K_));
+		cap = capFunc(K_);
 	}
 
 	/*Generates an N size look-up table*/
@@ -183,7 +193,7 @@ public:
 		}
 		else
 		{
-			v = Ni * Vt * asinhf(p / (2 * Is * K_));
+			v = newIterate(p);
 			v = cappedNewton(v, p);
 			iv = (v - p) / K_;
 		}
@@ -233,7 +243,7 @@ public:
 		}
 
 		// output
-		temp out = 0.5*matTool.multiply1x3by3x1(D_, xCombined) + E_ * inCombined + F_ * iv;
+		temp out = 0.5 * matTool.multiply1x3by3x1(D_, xCombined) + E_ * inCombined + F_ * iv;
 
 
 		matTool.copyTo(x2Prev, xPrev);
@@ -243,6 +253,12 @@ public:
 		adPrev = ad;
 		//JUCE_SNAP_TO_ZERO(out);
 		return out;
+	}
+
+	/*Sets the clipping type*/
+	void setClippingType(ClippingType type)
+	{
+		clippingType = type;
 	}
 
 	private:
@@ -324,35 +340,41 @@ public:
 	/*Symmetric clipping function*/
 	temp func(temp y, temp p)
 	{
-		temp arg = y / (Vt * Ni);
-
-		if (fabsf(arg) < 5)
-		{
-			temp sinhy = FastMathApproximations::sinh<temp>(arg);
-			return p + (2.0f * K_ * Is * sinhy) - y;
-		}
+		if (clippingType == ClippingType::symmetric)
+			return p + (2.0 * K_ * Is * sinh(y / (Vt * Ni))) - y;
 		else
-		{
-			return p + (2.0f * K_ * Is * sinhf(arg)) - y;
-		}
+			return p + K_ * Is * (exp(y / (Vt * Ni)) - exp(-y / (2.0 * Vt * Ni))) - y;
 	}
 
 	/*Jacobian*/
 	temp dfunc(temp y)
 	{
-		temp arg = y / (Vt * Ni);
-
-		if (fabsf(arg) < 5)
-		{
-			temp coshy = FastMathApproximations::cosh<temp>(arg);
-			return (2.0f * K_ * (Is / (Vt * Ni)) * coshy) - 1.0f;
-		}
+		if (clippingType == ClippingType::symmetric)
+			return (2.0 * K_ * (Is / (Vt * Ni)) * cosh(y / (Vt * Ni))) - 1.0;
 		else
-		{
-			return (2.0f * K_ * (Is / (Vt * Ni)) * coshf(arg)) - 1.0f;
-		}
+			return K_ * (Is / (Vt * Ni)) * (exp(y / (Vt * Ni)) + 0.5 * exp(-y / (2.0 * Vt * Ni))) - 1.0;
 	}
 
+	temp capFunc(temp Q)
+	{
+		if (clippingType == ClippingType::symmetric)
+			return Ni * Vt * acosh(-Ni * Vt / (2.0 * Is * Q));
+		else
+			return fabs(-2.0 * Ni * Vt * log(-2.0 * Ni * Vt / (Q * Is)));
+	}
+
+	temp newIterate(temp p)
+	{
+		if (clippingType == ClippingType::symmetric)
+			return Ni * Vt * asinh(p / (2.0 * Is * K_));
+		else
+		{
+			if (p < 0)
+				return -2.0 * Ni * Vt * log(1.0 + p / (K_ * Is));
+			else
+				return Ni * Vt * log(1.0 - p / (K_ * Is));
+		}
+	}
 	// Sample Rate
 	temp fs;
 
@@ -378,7 +400,7 @@ public:
 	temp c3 = 47e-9;
 	temp Is = 2.52e-9;						
 	temp Vt = 25.85e-3;							
-	temp Ni = 1.752;								
+	temp Ni = 1;								
 
 	Matrices<temp> matTool;
 
@@ -406,6 +428,8 @@ public:
 	temp* iLut;
 	temp* adLut;
 	size_t N;
+
+	ClippingType clippingType;
 };
 
 #endif // !TSClippingStage_h

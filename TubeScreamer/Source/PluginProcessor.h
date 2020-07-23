@@ -67,6 +67,7 @@ public:
     std::atomic <float>* tone;
     std::atomic <float>* out;
     std::atomic <float>* isAa;
+    std::atomic <float>* isSymm;
 private:
     // UI Params
     AudioProcessorValueTreeState parameters;
@@ -77,12 +78,16 @@ private:
     SmoothedValue<float> outputGainSmoothed;
 
     // Input high pass filters
-    IIRFilter highPass1;
-    IIRFilter highPass2;
+    IIRFilter highPassIn;
+    IIRFilter highPassOut;
 
     // Nonlinearities
-    TSClippingStage<double> noAA;
-    TSClippingStage<double> antiAliased;
+    TSClippingStage<double> regSymm{TSClippingStage<double>::ClippingType::symmetric};
+    TSClippingStage<double> regAsymm{ TSClippingStage<double>::ClippingType::asymmetric };
+    TSClippingStage<double> aaSymm{ TSClippingStage<double>::ClippingType::symmetric };
+    TSClippingStage<double> aaAsymm{ TSClippingStage<double>::ClippingType::asymmetric };
+
+
     int os = 1;
     Oversampling<float> overSampling{ (size_t)2, (size_t)os,
                                     Oversampling<float>::filterHalfBandPolyphaseIIR , true, true };
