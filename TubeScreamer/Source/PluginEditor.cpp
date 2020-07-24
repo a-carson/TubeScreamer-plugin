@@ -12,28 +12,25 @@
 //==============================================================================
 TubeScreamerAudioProcessorEditor::TubeScreamerAudioProcessorEditor(TubeScreamerAudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p)
+
 {
     setSize(300, 400);
 
     addAndMakeVisible(distortionKnob);
     distortionKnob.setSliderStyle(juce::Slider::Rotary);
-    distortionKnob.setRange(0.0f, 1.0f, 0.01f);
     distortionKnob.setValue(*audioProcessor.distortion);
     distortionKnob.setRotaryParameters(MathConstants<float>::pi * (9.0f / 8.0f), (23.0f / 8.0f) * MathConstants<float>::pi, true);
     distortionKnob.setTextBoxStyle(Slider::TextEntryBoxPosition::NoTextBox, false, 50, 50);
-    distortionKnob.addListener(this);
-    //sliderValueChanged(&distortionKnob);
-
+    distortionAttachment = std::make_unique<SliderAttachment>(audioProcessor.getAPVTS(), "dist", distortionKnob);
 
 
     addAndMakeVisible(toneKnob);
     toneKnob.setSliderStyle(juce::Slider::Rotary);
-    toneKnob.setRange(0.0f, 1.0f, 0.01f);
     toneKnob.setValue(*audioProcessor.tone);
     toneKnob.setRotaryParameters(MathConstants<float>::pi * (9.0f / 8.0f), (23.0f / 8.0f) * MathConstants<float>::pi, true);
     toneKnob.setTextBoxStyle(Slider::TextEntryBoxPosition::NoTextBox, false, 50, 50);
-    toneKnob.addListener(this);
-    //sliderValueChanged(&toneKnob);
+    toneAttachment = std::make_unique<SliderAttachment>(audioProcessor.getAPVTS(), "tone", toneKnob);
+
 
     addAndMakeVisible(levelKnob);
     levelKnob.setSliderStyle(juce::Slider::Rotary);
@@ -41,8 +38,7 @@ TubeScreamerAudioProcessorEditor::TubeScreamerAudioProcessorEditor(TubeScreamerA
     levelKnob.setValue(*audioProcessor.out);
     levelKnob.setRotaryParameters(MathConstants<float>::pi * (9.0f / 8.0f), (23.0f / 8.0f) * MathConstants<float>::pi, true);
     levelKnob.setTextBoxStyle(Slider::TextEntryBoxPosition::NoTextBox, false, 50, 50);
-    levelKnob.addListener(this);
-    //sliderValueChanged(&levelKnob);
+    levelAttachment = std::make_unique<SliderAttachment>(audioProcessor.getAPVTS(), "output", levelKnob);
 
     addAndMakeVisible(distortionLabel);
     distortionLabel.setText("OVERDRIVE", NotificationType::dontSendNotification);
@@ -72,7 +68,7 @@ TubeScreamerAudioProcessorEditor::TubeScreamerAudioProcessorEditor(TubeScreamerA
 
     addAndMakeVisible(textButton);
     textButton.setColour(TextButton::buttonColourId, Colours::dimgrey);
-    textButton.addListener(this);
+    //textButton.addListener(this);
     textButton.setToggleState(true, NotificationType::dontSendNotification);
 }
 
@@ -117,12 +113,6 @@ void TubeScreamerAudioProcessorEditor::resized()
 
 }
 
-void TubeScreamerAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
-{
-    *audioProcessor.distortion = distortionKnob.getValue();
-    *audioProcessor.out = levelKnob.getValue();
-    *audioProcessor.tone = toneKnob.getValue();
-}
 
 void TubeScreamerAudioProcessorEditor::buttonClicked(Button* button)
 {

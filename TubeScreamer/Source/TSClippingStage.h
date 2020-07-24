@@ -217,7 +217,6 @@ public:
 	temp antiAliasedProcess(temp in)
 	{
 		// Input
-		//JUCE_SNAP_TO_ZERO(in);
 		const temp p = matTool.multiply1x3by3x1(G_, x) + H_ * in;
 		temp iv = 0.0;
 		temp ad = lookUp(pLut, adLut, p);
@@ -251,7 +250,6 @@ public:
 		inPrev = in;
 		pPrev = p;
 		adPrev = ad;
-		//JUCE_SNAP_TO_ZERO(out);
 		return out;
 	}
 
@@ -400,7 +398,7 @@ public:
 	temp c3 = 47e-9;
 	temp Is = 2.52e-9;						
 	temp Vt = 25.85e-3;							
-	temp Ni = 1;								
+	temp Ni = 1.752;								
 
 	Matrices<temp> matTool;
 

@@ -54,8 +54,8 @@ public:
 };
 
 class TubeScreamerAudioProcessorEditor  : public juce::AudioProcessorEditor,
-                                          public juce::Button::Listener,
-                                          private juce::Slider::Listener
+                                          public juce::Button::Listener
+                                          //private juce::Slider::Listener
                                            
 {
 public:
@@ -66,29 +66,28 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    Slider distortionKnob;
 
 private:
 
-    void sliderValueChanged(Slider* slider) override;
     void buttonClicked(Button* button) override;
     void pedalOn();
     void pedalOff();
 
     TubeScreamerAudioProcessor& audioProcessor;
-    Slider toneKnob;
-    Slider levelKnob;
-
-    Label distortionLabel;
-    Label toneLabel;
-    Label levelLabel;
-    Label title;
+    Slider distortionKnob, toneKnob, levelKnob;
+    Label distortionLabel, toneLabel, levelLabel, title;
     MyLookAndFeel myLookAndFeel;
     Font font;
 
+    typedef juce::AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
+    typedef juce::AudioProcessorValueTreeState::ButtonAttachment ButtonAttachment;
+    std::unique_ptr<SliderAttachment> distortionAttachment;
+    std::unique_ptr<SliderAttachment> toneAttachment;
+    std::unique_ptr<SliderAttachment> levelAttachment;
+    std::unique_ptr<ButtonAttachment> bypassAttachment;
+
     bool isOn = true;
-
-
     TextButton textButton{ "BYPASS" };
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TubeScreamerAudioProcessorEditor)
 };

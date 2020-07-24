@@ -17,7 +17,9 @@ using namespace juce;
 //==============================================================================
 /**
 */
-class TubeScreamerAudioProcessor  : public juce::AudioProcessor
+class TubeScreamerAudioProcessor  : public juce::AudioProcessor,
+                                    public juce::ValueTree::Listener
+                                    
 {
 public:
     //==============================================================================
@@ -54,30 +56,29 @@ public:
     void changeProgramName (int index, const juce::String& newName) override;
 
     //==============================================================================
+    // Audio parameters
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    float distortionVal;
-    float level;
-    float toneVal;
+    AudioProcessorValueTreeState& getAPVTS() { return parameters; };
     bool isOn;
+    std::atomic <float>* gain = nullptr;
+    std::atomic <float>* distortion = nullptr;
+    std::atomic <float>* tone = nullptr;
+    std::atomic <float>* out = nullptr;
+    std::atomic <float>* isAa = nullptr;
+    std::atomic <float>* isSymm = nullptr;
 
-    std::atomic <float>* gain;
-    std::atomic <float>* distortion;
-    std::atomic <float>* tone;
-    std::atomic <float>* out;
-    std::atomic <float>* isAa;
-    std::atomic <float>* isSymm;
 private:
-    // UI Params
     AudioProcessorValueTreeState parameters;
-
-    double inGain = 1.0;
+    void updatePluginParameters();
+    void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
+    std::atomic<bool> shouldUpdate{ false };
     SmoothedValue<float> distortionSmoothed;
     SmoothedValue<float> toneSmoothed;
-    SmoothedValue<float> outputGainSmoothed;
+    SmoothedValue<float> levelSmoothed;
 
-    // Input high pass filters
+    // High pass filters
     IIRFilter highPassIn;
     IIRFilter highPassOut;
 
@@ -87,13 +88,14 @@ private:
     TSClippingStage<double> aaSymm{ TSClippingStage<double>::ClippingType::symmetric };
     TSClippingStage<double> aaAsymm{ TSClippingStage<double>::ClippingType::asymmetric };
 
-
+    // Oversampling
     int os = 1;
     Oversampling<float> overSampling{ (size_t)2, (size_t)os,
                                     Oversampling<float>::filterHalfBandPolyphaseIIR , true, true };
 
     // Tone Stage
     TSTone<float> toneStage;
+
     // Sine input for testing
     SineOsc sineOsc;
     //==============================================================================

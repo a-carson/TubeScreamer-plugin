@@ -23,10 +23,10 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
 #endif
     parameters(*this, nullptr, "ParamTreeIdentifier", {
     std::make_unique < AudioParameterFloat >("dist", "Distortion", 0.0f, 1.0f, 0.5f),
-    std::make_unique < AudioParameterFloat >("tone", "Tone", 0.0f, 1.0f, 0.5f),
+    std::make_unique < AudioParameterFloat >("tone", "Tone", 0.05f, 0.99f, 0.5f),
     std::make_unique < AudioParameterFloat >("output", "Level", 0.0f, 1.0f, 0.5f),
     std::make_unique < AudioParameterBool >("aa", "Anti-aliasing", 1),
-    std::make_unique < AudioParameterChoice >("clip_type", "Clipping Type", StringArray{ "Asymmetric", "Symmetric"}, 1)
+    std::make_unique < AudioParameterChoice >("clip_type", "Clipping Type", StringArray{ "Asymmetric", "Symmetric"}, 1),
         })
 
 {
@@ -36,6 +36,8 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
     tone = parameters.getRawParameterValue("tone");
     isAa = parameters.getRawParameterValue("aa");
     isSymm = parameters.getRawParameterValue("clip_type");
+
+    parameters.state.addListener(this);
 }
 
 TubeScreamerAudioProcessor::~TubeScreamerAudioProcessor()
@@ -108,16 +110,19 @@ void TubeScreamerAudioProcessor::changeProgramName (int index, const juce::Strin
 //==============================================================================
 void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Sine Osc - for testing only
+    // Oversampled sampling frequency
     float fs = sampleRate * overSampling.getOversamplingFactor();
+
+    // Sine Osc - for testing only
     sineOsc.setSampleRate(fs);
-    sineOsc.setFrequency(5000.0);
+    sineOsc.setFrequency(220.0);
 
     // Input and Output High Pass (DC Block)
     highPassIn.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.6));
     highPassOut.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 3.0));
 
     // Clipping
+    overSampling.initProcessing(samplesPerBlock);
     regSymm.makeLookUpTable(8192, fs, 10.0, 1.0);
     regAsymm.makeLookUpTable(8192, fs, 10.0, 1.0);
     aaSymm.makeLookUpTable(8192, fs / 1.5, 10.0, 1.0);
@@ -127,14 +132,18 @@ void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     toneStage.setSampleRate(sampleRate);
     toneStage.setTone(1.0f);
 
-    overSampling.initProcessing(samplesPerBlock);
+    // UI Parameters
+    levelSmoothed.reset(sampleRate, 0.01);
+    levelSmoothed.setCurrentAndTargetValue(0.0);
+    toneSmoothed.reset(sampleRate, 0.01);
+    toneSmoothed.setCurrentAndTargetValue(0.0);
+    updatePluginParameters();
 
 }
 
 void TubeScreamerAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
+
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -171,17 +180,8 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         buffer.clear (i, 0, buffer.getNumSamples());
 
     // UI Params -----------------------------------------------
-    // Distortion
-    regSymm.setDistortion(*distortion);
-    regAsymm.setDistortion(*distortion);
-    aaSymm.setDistortion(*distortion);
-    aaAsymm.setDistortion(*distortion);
-
-    // Tone
-    toneStage.setTone(*tone);
-
-    // Level
-    float outGain = *out;
+    if (shouldUpdate)
+        updatePluginParameters();
 
 
     if (isOn)
@@ -191,7 +191,6 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         highPassIn.processSamples(samples, buffer.getNumSamples());
 
         // Non-linearity -------------------------------------------
-
         // Upsample
         AudioBlock<float> block{ buffer };
         AudioBlock<float> upsampledBlock = overSampling.processSamplesUp(block);
@@ -200,9 +199,9 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         // Loop
         for (int i = 0; i < upsampledBlock.getNumSamples(); i++)
         {
+            JUCE_SNAP_TO_ZERO(newSamples[i]);
             // Sine wave - for testing only
             //newSamples[i] = 0.1f * sineOsc.process();
-
 
             if ((int)*isAa)
             { 
@@ -214,13 +213,13 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             else
             {
                 if ((int)*isSymm > 0)
-                    newSamples[i] = regSymm.process(newSamples[i], true);
+                    newSamples[i] = regSymm.process(newSamples[i], false);
                 else
-                    newSamples[i] = regAsymm.process(newSamples[i], true);
+                    newSamples[i] = regAsymm.process(newSamples[i], false);
             }
 
-
-            newSamples[i] *= outGain;
+            float outputLevel = levelSmoothed.getNextValue();
+            newSamples[i] *= outputLevel;
         }
 
         // Downsample
@@ -237,7 +236,9 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             auto* channelData = buffer.getWritePointer(channel);
 
             for (int i = 0; i < buffer.getNumSamples(); i++)
+            {
                 channelData[i] = downSamples[i];
+            }
         }
     }
 }
@@ -278,4 +279,19 @@ void TubeScreamerAudioProcessor::setStateInformation (const void* data, int size
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new TubeScreamerAudioProcessor();
+}
+
+void TubeScreamerAudioProcessor::updatePluginParameters()
+{ 
+    regSymm.setDistortion(*distortion);
+    regAsymm.setDistortion(*distortion);
+    aaSymm.setDistortion(*distortion);
+    aaAsymm.setDistortion(*distortion);
+    toneStage.setTone(*tone);
+    levelSmoothed.setTargetValue(*out);
+}
+
+void TubeScreamerAudioProcessor::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property)
+{
+    shouldUpdate = true;
 }
