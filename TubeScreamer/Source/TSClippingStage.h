@@ -4,9 +4,10 @@
 #include "JuceHeader.h"
 #include "Matrices.h"
 #include <cmath>
-
+#include <Eigen/Dense>
 using namespace juce;
 using namespace dsp;
+
 
 template<class temp>
 
@@ -24,8 +25,9 @@ public:
 	TSClippingStage(ClippingType type)
 	{
 		clippingType = type;
+		createStateSpaceArrays();
+		initialise();
 	};
-
 
 	/*Set sample rate*/
 	void setSampleRate(temp sampleRate)
@@ -37,7 +39,7 @@ public:
 	void setDistortion(temp distortion)
 	{
 		r2 = 51e3 + distortion* 500e3;
-		A[1][1] = -1.0f / (r2 * c2);
+		A(1,1) = -1.0f / (r2 * c2);
 		updateStateSpaceArrays();
 	}
 
@@ -47,50 +49,6 @@ public:
 		Is = saturationCurrent;
 		Vt = thermalVoltage;
 		Ni = idealityFactor;
-	}
-
-	/*Updates state space arrays*/
-	void updateStateSpaceArrays()
-	{
-		temp AplusI[3][3];
-
-		for (int i = 0; i < 3; i++)
-		{
-			for (int j = 0; j < 3; j++)
-			{
-				if (i == j)
-					I[i][i] = 2.0f * fs;
-				else
-					I[i][j] = 0.0f;
-
-				Z[i][j] = I[i][j] - A[i][j];
-				AplusI[i][j] = A[i][j] + I[i][j];
-			}
-		}
-
-		// Matrix multiplications
-		matTool.invert3x3(Z);						// Z
-		matTool.multiply3x3by3x3(AplusI, Z, A_);	// A_
-		matTool.multiply3x3by3x1(Z, B, B_);			// B_
-		matTool.multiply3x3by3x1(Z, C, C_);			// C_
-		matTool.multiply1x3by3x3(D, Z, D_);			// D_
-		E_ = E + matTool.multiply1x3by3x1(D, B_);	// E_
-		F_ = matTool.multiply1x3by3x1(D, C_);		// F_
-		matTool.multiply1x3by3x3(G, Z, G_);			// G_
-		H_ = B_[1][0];								// H_
-		K_ = C_[1][0];								// K_		
-
-		// Scalar multiplication
-		for (int i = 0; i < 3; i++)
-		{
-			B_[i][0] *= 2.0f;
-			C_[i][0] *= 2.0f;
-			D_[i] *= 2.0f * fs;
-			G_[i] *= 2.0f * fs;
-		}
-
-		// update Newton cap
-		cap = capFunc(K_);
 	}
 
 	/*Generates an N size look-up table*/
@@ -183,7 +141,8 @@ public:
 	temp process(temp in, bool useLut)
 	{
 		// Input
-		const temp p = matTool.multiply1x3by3x1(G_, x) + H_ * in;
+		//const temp p = matTool.multiply1x3by3x1(G_, x) + H_ * in;
+		const temp p = G_.dot(x) + H_ * in;
 
 		// Solve non-linearity
 		temp iv = 0.0;
@@ -199,17 +158,20 @@ public:
 		}
 
 		// State update
-		temp xTemp[3][1];
-		matTool.multiply3x3by3x1(A_, xPrev, xTemp);
-		for (int i = 0; i < 3; i++)
-		{
-			x[i][0] = xTemp[i][0] + (B_[i][0] * in) + (C_[i][0] * iv);
-		}
+		//temp xTemp[3][1];
+		//matTool.multiply3x3by3x1(A_, xPrev, xTemp);
+		//for (int i = 0; i < 3; i++)
+		//{
+		//	x[i][0] = xTemp[i][0] + (B_[i][0] * in) + (C_[i][0] * iv);
+		//}
+
+		x = A_ * xPrev + B_ * in + C_ * iv;
+		float out = D_.dot(xPrev) + E_ * in + F_ * iv;
 
 		// Calculate output
-		float out = matTool.multiply1x3by3x1(D_, xPrev) + E_ * in + F_ * iv;
-
-		matTool.copyTo(xPrev, x);
+		//float out = matTool.multiply1x3by3x1(D_, xPrev) + E_ * in + F_ * iv;
+		xPrev = x;
+		//matTool.copyTo(xPrev, x);
 		return out;
 	}
 
@@ -373,21 +335,107 @@ public:
 				return Ni * Vt * log(1.0 - p / (K_ * Is));
 		}
 	}
+
+	/*Creates the state space arrays*/
+	void createStateSpaceArrays()
+	{
+		A << -1.0 / (r1 * c1), 0.0, 0.0,
+							 -1.0 / (r3 * c2), -1.0 / (r2 * c2), -1.0 / (r3 * c2) ,
+							-1.0 / (r3 * c3), 0.0, -1.0 / (r3 * c3) ;
+
+
+		B << 1.0 / (r1 * c1),  1.0 / (r3 * c2) ,  1.0 / (r3 * c3);
+		C << 0.0,  -1.0 / c2 ,  0.0;
+		D << -1.0, 1.0, 0.0;
+		E = 1.0;
+		G << 0.0, 1.0, 0.0;
+		I.setIdentity();
+		//A.transposeInPlace();
+		//B = B.transpose().eval();
+		//D = D.transpose().eval();
+	}
+
+	/*Updates state space arrays*/
+	void updateStateSpaceArrays()
+	{
+		//temp AplusI[3][3];
+
+		//for (int i = 0; i < 3; i++)
+		//{
+		//	for (int j = 0; j < 3; j++)
+		//	{
+		//		if (i == j)
+		//			I[i][i] = 2.0f * fs;
+		//		else
+		//			I[i][j] = 0.0f;
+
+		//		Z[i][j] = I[i][j] - A[i][j];
+		//		AplusI[i][j] = A[i][j] + I[i][j];
+		//	}
+		//}
+
+		//// Matrix multiplications
+		//matTool.invert3x3(Z);						// Z
+		//matTool.multiply3x3by3x3(AplusI, Z, A_);	// A_
+		//matTool.multiply3x3by3x1(Z, B, B_);			// B_
+		//matTool.multiply3x3by3x1(Z, C, C_);			// C_
+		//matTool.multiply1x3by3x3(D, Z, D_);			// D_
+		//E_ = E + matTool.multiply1x3by3x1(D, B_);	// E_
+		//F_ = matTool.multiply1x3by3x1(D, C_);		// F_
+		//matTool.multiply1x3by3x3(G, Z, G_);			// G_
+		//H_ = B_[1][0];								// H_
+		//K_ = C_[1][0];								// K_		
+
+		//// Scalar multiplication
+		//for (int i = 0; i < 3; i++)
+		//{
+		//	B_[i][0] *= 2.0f;
+		//	C_[i][0] *= 2.0f;
+		//	D_[i] *= 2.0f * fs;
+		//	G_[i] *= 2.0f * fs;
+		//}
+		Eigen::Matrix3d toInvert = 2 * fs * I - A;
+		Z = toInvert.inverse();
+		A_ = (2 * fs * I + A) * Z;
+		B_ = 2 * Z * B;
+		C_ = 2 * Z * C;
+		D_ = D.transpose() * Z;
+		E_ = E + D_.dot(B);
+		F_ = D_.dot(C);
+		G_ = G.transpose() * Z;
+		H_ = G_.dot(B);
+		K_ = G_ .dot(C);
+
+		D_ *= 2 * fs;
+		G_ *= 2 * fs;
+
+		// update Newton cap
+		cap = capFunc(K_);
+	}
+
+	/*Sets all state variables to zero*/
+	void initialise()
+	{
+		x << 0.0, 0.0, 0.0;
+		xPrev = x;
+		x2Prev = x;
+		adPrev = 0.0;
+		pPrev = 0.0;
+		inPrev = 0.0;
+		v = 0.0;
+	}
+
 	// Sample Rate
 	temp fs;
 
 	// state variable
-	temp x[3][1] = { { 0.0 }, { 0.0 }, { 0.0 } };
-	temp xPrev[3][1] = { { 0.0 }, { 0.0 }, { 0.0 } };
-	temp x2Prev[3][1] = { { 0.0 }, { 0.0 }, { 0.0 } };
+	//temp x[3][1] = { { 0.0 }, { 0.0 }, { 0.0 } };
+	//temp xPrev[3][1] = { { 0.0 }, { 0.0 }, { 0.0 } };
+	//temp x2Prev[3][1] = { { 0.0 }, { 0.0 }, { 0.0 } };
 
-	// voltage across diodes
-	temp v = 0.0;
+	// state variables
+	temp v, adPrev, pPrev, inPrev;
 
-	// anti-derivs
-	temp adPrev = 0.0;
-	temp pPrev = 0.0;
-	temp inPrev = 0.0;
 
 	// Circuit parameters
 	temp r1 = 10.0e3;
@@ -403,17 +451,17 @@ public:
 	Matrices<temp> matTool;
 
 	// State space arrays
-	temp A[3][3] = { {-1.0 / (r1 * c1), 0.0, 0.0},
-					{ -1.0 / (r3 * c2), -1.0 / (r2 * c2), -1.0 / (r3 * c2) },
-					{-1.0 / (r3 * c3), 0.0, -1.0 / (r3 * c3)} };
+	//temp A[3][3] = { {-1.0 / (r1 * c1), 0.0, 0.0},
+	//				{ -1.0 / (r3 * c2), -1.0 / (r2 * c2), -1.0 / (r3 * c2) },
+	//				{-1.0 / (r3 * c3), 0.0, -1.0 / (r3 * c3)} };
 
-	temp B[3][1] = { {1.0 / (r1 * c1)},{ 1.0 / (r3 * c2)},{ 1.0 / (r3 * c3) } };
-	temp C[3][1] = { {0.0}, {-1.0/c2}, {0.0} };
-	temp D[3] = { -1.0, 1.0, 0.0 };
-	temp E = 1.0;
-	temp G[3] = { 0.0, 1.0, 0.0 };
+	//temp B[3][1] = { {1.0 / (r1 * c1)},{ 1.0 / (r3 * c2)},{ 1.0 / (r3 * c3) } };
+	//temp C[3][1] = { {0.0}, {-1.0/c2}, {0.0} };
+	//temp D[3] = { -1.0, 1.0, 0.0 };
+	//temp E = 1.0;
+	//temp G[3] = { 0.0, 1.0, 0.0 };
 
-	temp A_[3][3], B_[3][1], C_[3][1], D_[3], E_, F_, G_[3], H_, I[3][3], K_, Z[3][3];
+	//temp A_[3][3], B_[3][1], C_[3][1], D_[3], E_, F_, G_[3], H_, I[3][3], K_, Z[3][3];
 
 	// Newton raphson parameters
 	temp cap;
@@ -428,6 +476,10 @@ public:
 	size_t N;
 
 	ClippingType clippingType;
-};
 
+	Eigen::Matrix3d A, Z, A_, I;
+	Eigen::Vector3d B, C, D, G, B_, C_, D_, G_, x, xPrev, x2Prev;
+	temp E, F, H, K, E_, F_, H_, K_;
+
+};
 #endif // !TSClippingStage_h

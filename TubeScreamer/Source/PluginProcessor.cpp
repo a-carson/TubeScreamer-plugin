@@ -205,10 +205,10 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             newSamples[i] *= 0.95F;
             if ((int)*isAa)
             { 
-                if ((int)*isSymm < 1)
+                /*if ((int)*isSymm < 1)
                     newSamples[i] = aaSymm.antiAliasedProcess(newSamples[i]);
                 else
-                    newSamples[i] = aaAsymm.antiAliasedProcess(newSamples[i]);
+                    newSamples[i] = aaAsymm.antiAliasedProcess(newSamples[i]);*/
             }
             else
             {
