@@ -26,7 +26,7 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
     std::make_unique < AudioParameterFloat >("tone", "Tone", 0.05f, 0.99f, 0.5f),
     std::make_unique < AudioParameterFloat >("output", "Level", 0.0f, 1.0f, 0.5f),
     std::make_unique < AudioParameterBool >("aa", "Anti-aliasing", 1),
-    std::make_unique < AudioParameterChoice >("clip_type", "Clipping Type", StringArray{ "Asymmetric", "Symmetric"}, 1),
+    std::make_unique < AudioParameterChoice >("clip_type", "Clipping Type", StringArray{"Symmetric", "Asymmetric"}, 1),
         })
 
 {
@@ -123,10 +123,10 @@ void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
 
     // Clipping
     overSampling.initProcessing(samplesPerBlock);
-    regSymm.makeLookUpTable(8192, fs, 10.0, 1.0);
-    regAsymm.makeLookUpTable(8192, fs, 10.0, 1.0);
-    aaSymm.makeLookUpTable(8192, fs / 1.5, 10.0, 1.0);
-    aaAsymm.makeLookUpTable(8192, fs / 1.5, 10.0, 1.0);
+    regSymm.makeLookUpTable(16384, fs, 15.0, 1.0);
+    regAsymm.makeLookUpTable(16384, fs, 15.0, 1.0);
+    aaSymm.makeLookUpTable(16384, fs / 1.5, 15.0, 1.0);
+    aaAsymm.makeLookUpTable(16384, fs / 1.5, 15.0, 1.0);
 
     // Tone
     toneStage.setSampleRate(sampleRate);
@@ -202,17 +202,17 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             JUCE_SNAP_TO_ZERO(newSamples[i]);
             // Sine wave - for testing only
             //newSamples[i] = 0.1f * sineOsc.process();
-
+            newSamples[i] *= 0.95F;
             if ((int)*isAa)
             { 
-                if ((int)*isSymm > 0)
+                if ((int)*isSymm < 1)
                     newSamples[i] = aaSymm.antiAliasedProcess(newSamples[i]);
                 else
                     newSamples[i] = aaAsymm.antiAliasedProcess(newSamples[i]);
             }
             else
             {
-                if ((int)*isSymm > 0)
+                if ((int)*isSymm < 1)
                     newSamples[i] = regSymm.process(newSamples[i], false);
                 else
                     newSamples[i] = regAsymm.process(newSamples[i], false);

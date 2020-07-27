@@ -91,7 +91,7 @@ private:
     // Oversampling
     int os = 1;
     Oversampling<float> overSampling{ (size_t)2, (size_t)os,
-                                    Oversampling<float>::filterHalfBandPolyphaseIIR , true, true };
+                                    Oversampling<float>::filterHalfBandFIREquiripple , true, false };
 
     // Tone Stage
     TSTone<float> toneStage;

@@ -19,7 +19,7 @@ class MyLookAndFeel : public juce::LookAndFeel_V4
 public:
     MyLookAndFeel()
     {
-        setColour(juce::Slider::thumbColourId, juce::Colours::red);
+        
     }
 
     void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPos,
@@ -81,13 +81,19 @@ private:
 
     typedef juce::AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
     typedef juce::AudioProcessorValueTreeState::ButtonAttachment ButtonAttachment;
-    std::unique_ptr<SliderAttachment> distortionAttachment;
-    std::unique_ptr<SliderAttachment> toneAttachment;
-    std::unique_ptr<SliderAttachment> levelAttachment;
+    typedef juce::AudioProcessorValueTreeState::ComboBoxAttachment ComboBoxAttachment;
+    std::unique_ptr<SliderAttachment> distortionAttachment, toneAttachment, levelAttachment;
     std::unique_ptr<ButtonAttachment> bypassAttachment;
+    std::unique_ptr<ComboBoxAttachment> dropDownAttachment;
 
     bool isOn = true;
     TextButton textButton{ "BYPASS" };
+    
+    Component led;
+    Colour ledColour = Colours::red;
+    Colour tsColour{ 72, 191, 93 };
 
+    ComboBox dropDown;
+    Label dropDownLabel;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TubeScreamerAudioProcessorEditor)
 };

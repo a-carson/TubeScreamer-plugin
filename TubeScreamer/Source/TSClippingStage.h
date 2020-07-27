@@ -3,8 +3,8 @@
 #define TSClippingStage_h
 #include "JuceHeader.h"
 #include "Matrices.h"
-
 #include <cmath>
+
 using namespace juce;
 using namespace dsp;
 

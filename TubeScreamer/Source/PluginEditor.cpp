@@ -60,16 +60,30 @@ TubeScreamerAudioProcessorEditor::TubeScreamerAudioProcessorEditor(TubeScreamerA
     font.setBold(true);
     font.setHeight(30.0f);
     addAndMakeVisible(title);
-    title.setText("TUBE SCREAMER", NotificationType::dontSendNotification);
+    title.setText("VA808 OVERDRIVE", NotificationType::dontSendNotification);
     title.setJustificationType(Justification::centred);
     title.setFont(font);
     title.setColour(Label::textColourId, Colours::whitesmoke);
 
 
     addAndMakeVisible(textButton);
-    textButton.setColour(TextButton::buttonColourId, Colours::dimgrey);
-    //textButton.addListener(this);
+    textButton.setColour(TextButton::buttonColourId, Colours::darkgrey);
+    textButton.setColour(TextButton::buttonOnColourId, Colours::silver);
+    textButton.addListener(this);
     textButton.setToggleState(true, NotificationType::dontSendNotification);
+
+    addAndMakeVisible(led);
+
+    addAndMakeVisible(dropDown);
+    dropDown.addItemList({ "SYMMETRIC", "ASYMMETRIC" }, 1);
+    dropDown.setColour(ComboBox::backgroundColourId,Colours::silver);
+    dropDown.setJustificationType(Justification::centred);
+    dropDown.setSelectedId(0, NotificationType::dontSendNotification);
+    dropDownAttachment = std::make_unique<ComboBoxAttachment>(audioProcessor.getAPVTS(), "clip_type", dropDown);
+    dropDownLabel.attachToComponent(&dropDown, true);
+    dropDownLabel.setText("CLIPPING TYPE", NotificationType::dontSendNotification);
+    dropDownLabel.setColour(Label::textColourId, Colours::whitesmoke);
+    dropDown.setColour(ComboBox::textColourId, Colours::whitesmoke);
 }
 
 TubeScreamerAudioProcessorEditor::~TubeScreamerAudioProcessorEditor()
@@ -80,8 +94,8 @@ TubeScreamerAudioProcessorEditor::~TubeScreamerAudioProcessorEditor()
 //==============================================================================
 void TubeScreamerAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.fillAll(Colours::forestgreen);
-    g.setColour(Colours::red);
+    g.fillAll(tsColour);
+    g.setColour(ledColour);
     float diameter = 20.0f;
     g.fillEllipse(0.5 * (getWidth() - diameter), 30.0f, diameter, diameter);
     setLookAndFeel(&myLookAndFeel);
@@ -90,27 +104,30 @@ void TubeScreamerAudioProcessorEditor::paint (juce::Graphics& g)
 void TubeScreamerAudioProcessorEditor::resized()
 {
     const int border = 30;
+    const int yborder = 25;
     const int knobSize = 80;
     const int textHeight = 15;
     const int gap = 10;
     const int buttonSize = 125;
 
     // Knobs
-    distortionKnob.setBounds(border, border, knobSize, knobSize);
-    levelKnob.setBounds(getWidth() - border - knobSize, border, knobSize, knobSize);
-    toneKnob.setBounds(0.5 * (getWidth() - knobSize), border + 0.5 * knobSize + textHeight, knobSize, knobSize);
+    distortionKnob.setBounds(border, yborder, knobSize, knobSize);
+    levelKnob.setBounds(getWidth() - border - knobSize, yborder, knobSize, knobSize);
+    toneKnob.setBounds(0.5 * (getWidth() - knobSize), yborder + 0.5 * knobSize + textHeight, knobSize, knobSize);
 
     // Labels
-    distortionLabel.setBounds(border, border + knobSize - gap, knobSize, textHeight);
-    levelLabel.setBounds(getWidth() - border - knobSize, border + knobSize - gap, knobSize, textHeight);
-    toneLabel.setBounds(0.5 * (getWidth() - knobSize), border + 1.5 * knobSize + textHeight - gap, knobSize, textHeight);
+    distortionLabel.setBounds(border, yborder + knobSize - gap, knobSize, textHeight);
+    levelLabel.setBounds(getWidth() - border - knobSize, yborder + knobSize - gap, knobSize, textHeight);
+    toneLabel.setBounds(0.5 * (getWidth() - knobSize), yborder + 1.5 * knobSize + textHeight - gap, knobSize, textHeight);
     
     // Main title 
-    title.setBounds(0.5 * (getWidth() - 200), 0.5 * (getHeight() - gap - font.getHeight()), 200, gap + font.getHeight());
+    title.setBounds(0.5 * (getWidth() - 200), 0.47 * (getHeight() - font.getHeight()), 200, gap + font.getHeight());
 
     // Button
-    textButton.setBounds(0.5*(getWidth() - buttonSize), 0.75 * getHeight() - 0.5*buttonSize, buttonSize, buttonSize);
+    textButton.setBounds(0.5*(getWidth() - buttonSize), 0.7 * getHeight() - 0.5*buttonSize, buttonSize, buttonSize);
 
+    dropDown.setBounds(0.5*getWidth(), 0.9 * getHeight(), buttonSize, 20);
+    dropDownLabel.setBoundsRelative(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 
@@ -131,6 +148,10 @@ void TubeScreamerAudioProcessorEditor::pedalOn()
     textButton.setToggleState(true, NotificationType::dontSendNotification);
     isOn = true;
     audioProcessor.isOn = true;
+    dropDown.setColour(ComboBox::backgroundColourId, Colours::silver);
+    ledColour = Colours::red;
+    textButton.setButtonText("BYPASS");
+    repaint();
 }
 
 void TubeScreamerAudioProcessorEditor::pedalOff()
@@ -138,4 +159,8 @@ void TubeScreamerAudioProcessorEditor::pedalOff()
     textButton.setToggleState(false, NotificationType::dontSendNotification);
     isOn = false;
     audioProcessor.isOn = false;
+    ledColour = Colours::black;
+    dropDown.setColour(ComboBox::backgroundColourId, Colours::darkgrey);
+    textButton.setButtonText("BYPASSED");
+    repaint();
 }
