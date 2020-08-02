@@ -123,10 +123,10 @@ void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
 
     // Clipping
     overSampling.initProcessing(samplesPerBlock);
-    regSymm.makeLookUpTable(16384, fs, 15.0, 1.0);
-    regAsymm.makeLookUpTable(16384, fs, 15.0, 1.0);
-    aaSymm.makeLookUpTable(16384, fs / 1.5, 15.0, 1.0);
-    aaAsymm.makeLookUpTable(16384, fs / 1.5, 15.0, 1.0);
+    regSymm.makeLookUpTable(32768, fs, 50.0, 1.0);
+    regAsymm.makeLookUpTable(32768, fs, 50.0, 1.0);
+    aaSymm.makeLookUpTable(32768, fs / 1.5, 50.0, 1.0);
+    aaAsymm.makeLookUpTable(32768, fs / 1.5, 50.0, 1.0);
 
     // Tone
     toneStage.setSampleRate(sampleRate);
