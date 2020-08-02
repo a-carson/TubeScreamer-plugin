@@ -123,7 +123,7 @@ public:
 		// Trapezoid Integration - ad(p) look-up table
 		temp ad = 0.0;
 		p1 = -pmax;
-		temp i0 = lookUp(pLut, iLut, 0.0);
+		temp i0 = lagrangeInterp.lookUp(pLut, iLut, 0.0);
 		for (int i = 0; i < N; i++)
 		{
 			iLut[i] -= i0;
@@ -134,12 +134,11 @@ public:
 		}
 
 		// Adjust offset
-		temp ad0 = lookUp(pLut, adLut, 0.0);
+		temp ad0 = lagrangeInterp.lookUp(pLut, adLut, 0.0);
 		for (int i = 0; i < N; i++)
 		{
 			adLut[i] -= ad0;
 		}
-
 
 	}
 
@@ -192,7 +191,6 @@ public:
 			iv = lagrangeInterp.lookUp(pLut, iLut, 0.5 * (p + pPrev));
 
 		// update state variable
-
 		temp xCombined[3][1] = { {0.0}, {0.0}, {0.0} };
 		matTool.add3x1s(xCombined, xPrev);
 		matTool.add3x1s(xCombined, x2Prev);
@@ -338,6 +336,7 @@ public:
 				return Ni * Vt * log(1.0 - p / (K_ * Is));
 		}
 	}
+
 	// Sample Rate
 	temp fs;
 

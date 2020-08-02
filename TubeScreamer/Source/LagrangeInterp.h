@@ -16,8 +16,6 @@ public:
 	{
 		nNN = order + 1;
 		indices = new int[nNN];
-		x_ = new temp[nNN];
-		y_ = new temp[nNN];
 		for (int i = 0; i < nNN; i++)
 		{
 			indices[i] = 0;
@@ -48,22 +46,18 @@ public:
 				indices[nNN - 1 - i] -= indices[0];
 
 		temp yq = 0.0;
-		temp p = 1.0;
 
 		for (int i = 0; i < nNN; i++)
 		{
-			int ind = indices[i];
-			x_[i] = x[ind];
-			y_[i] = y[ind];
-		}
+			temp p = 1.0;
+			int indI = indices[i];
 
-		for (int i = 0; i < nNN; i++)
-		{
-			p = 1.0;
 			for (int j = 0; j < nNN; j++)
 			{
+				int indJ = indices[j];
+
 				if (j != i)
-					p *= (xq - x_[j]) / (x_[i] - x_[j]);
+					p *= (xq - x[indJ]) / (x[indI] - x[indJ]);
 			}
 			yq += y_[i] * p;
 		}
@@ -75,8 +69,6 @@ private:
 	size_t nNN;	// number of nearest neighbours
 	int* indices;
 	size_t L;
-	temp* x_;
-	temp* y_;
 };
 
 #endif // LagrangeInterp_h
