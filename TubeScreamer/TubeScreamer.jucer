@@ -16,6 +16,8 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="hYnELl" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
       <FILE id="biaRnT" name="TSTone.h" compile="0" resource="0" file="Source/TSTone.h"/>
+      <FILE id="RZxb49" name="LagrangeInterp.h" compile="0" resource="0"
+            file="Source/LagrangeInterp.h"/>
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>

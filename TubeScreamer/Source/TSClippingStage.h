@@ -3,6 +3,7 @@
 #define TSClippingStage_h
 #include "JuceHeader.h"
 #include "Matrices.h"
+#include "LagrangeInterp.h"
 #include <cmath>
 
 using namespace juce;
@@ -97,6 +98,7 @@ public:
 	void makeLookUpTable(size_t numPoints, temp sampleRate, temp pmax, temp distortion)
 	{
 		N = numPoints;
+		lagrangeInterp.setTableSize(N);
 		pLut = new temp[N];
 		iLut = new temp[N];
 		adLut = new temp[N];
@@ -141,44 +143,6 @@ public:
 
 	}
 
-	/*Cubic Lagrange look-up*/
-	temp lookUp(temp* x, temp* y, temp xq)
-	{
-		int indices[4] = { -1, 0, 1, 2 };
-		temp indBet = (xq - x[0]) / (x[1] - x[0]);
-		int indBetFloored = floorf(indBet);
-
-		for (int i = 0; i < 4; i++)
-			indices[i] += indBetFloored;
-
-
-		if (indices[3] > (N - 1))
-			for (int i = 0; i < 4; i++)
-				indices[i] -= indices[3] - N + 1;
-
-		if (indices[0] < 0)
-			for (int i = 0; i < 4; i++)
-				indices[3 - i] -= indices[0];
-
-
-		temp alpha = indBet - indices[2] + 0.5;
-
-		temp P[4] = { (alpha + 0.5) * (alpha - 0.5) * (alpha - 1.5) / -6.0 ,
-		(alpha + 1.5) * (alpha - 0.5) * (alpha - 1.5) / 2.0,
-		(alpha + 0.5) * (alpha - 1.5) * (alpha + 1.5) / -2.0,
-		(alpha + 0.5) * (alpha - 0.5) * (alpha + 1.5) / 6.0 };
-
-		temp yq = 0.0;
-
-		for (int i = 0; i < 4; i++)
-		{
-			int ind = indices[i];
-			yq += P[i] * y[ind];
-		}
-
-		return yq;
-	}
-
 	/*Regular process - without any aliasing mitigation*/
 	temp process(temp in, bool useLut)
 	{
@@ -189,7 +153,7 @@ public:
 		temp iv = 0.0;
 		if (useLut)
 		{
-			iv = lookUp(pLut, iLut, p);
+			iv = lagrangeInterp.lookUp(pLut, iLut, p);
 		}
 		else
 		{
@@ -219,12 +183,13 @@ public:
 		// Input
 		const temp p = matTool.multiply1x3by3x1(G_, x) + H_ * in;
 		temp iv = 0.0;
-		temp ad = lookUp(pLut, adLut, p);
+		temp ad = lagrangeInterp.lookUp(pLut, adLut, p);
+
 
 		if (fabsf(p - pPrev) > 1.0e-8)
 			iv = (ad - adPrev) / (p - pPrev);
 		else
-			iv = lookUp(pLut, iLut, 0.5 * (p + pPrev));
+			iv = lagrangeInterp.lookUp(pLut, iLut, 0.5 * (p + pPrev));
 
 		// update state variable
 
@@ -428,6 +393,7 @@ public:
 	size_t N;
 
 	ClippingType clippingType;
+	LagrangeInterp<temp> lagrangeInterp;
 };
 
 #endif // !TSClippingStage_h
