@@ -19,8 +19,8 @@ public:
 		for (int i = 0; i < nNN; i++)
 		{
 			indices[i] = 0;
-			x_[i] = 0.0;
-			y_[i] = 0.0;
+			//x_[i] = 0.0;
+			//y_[i] = 0.0;
 		}
 	}
 
@@ -59,7 +59,7 @@ public:
 				if (j != i)
 					p *= (xq - x[indJ]) / (x[indI] - x[indJ]);
 			}
-			yq += y_[i] * p;
+			yq += y[indI] * p;
 		}
 
 		return yq;

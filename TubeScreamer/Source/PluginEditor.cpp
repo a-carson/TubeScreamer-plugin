@@ -28,6 +28,8 @@ TubeScreamerAudioProcessorEditor::TubeScreamerAudioProcessorEditor(TubeScreamerA
     toneKnob.setSliderStyle(juce::Slider::Rotary);
     toneKnob.setValue(*audioProcessor.tone);
     toneKnob.setRotaryParameters(MathConstants<float>::pi * (9.0f / 8.0f), (23.0f / 8.0f) * MathConstants<float>::pi, true);
+    //toneKnob.setSkewFactorFromMidPoint(0.9);
+    toneKnob.setSkewFactor(10.0, false);
     toneKnob.setTextBoxStyle(Slider::TextEntryBoxPosition::NoTextBox, false, 50, 50);
     toneAttachment = std::make_unique<SliderAttachment>(audioProcessor.getAPVTS(), "tone", toneKnob);
 
@@ -60,7 +62,7 @@ TubeScreamerAudioProcessorEditor::TubeScreamerAudioProcessorEditor(TubeScreamerA
     font.setBold(true);
     font.setHeight(30.0f);
     addAndMakeVisible(title);
-    title.setText("VA808 OVERDRIVE", NotificationType::dontSendNotification);
+    title.setText("TS OVERDRIVE", NotificationType::dontSendNotification);
     title.setJustificationType(Justification::centred);
     title.setFont(font);
     title.setColour(Label::textColourId, Colours::whitesmoke);

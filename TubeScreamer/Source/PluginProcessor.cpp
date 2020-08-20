@@ -23,7 +23,7 @@ TubeScreamerAudioProcessor::TubeScreamerAudioProcessor()
 #endif
     parameters(*this, nullptr, "ParamTreeIdentifier", {
     std::make_unique < AudioParameterFloat >("dist", "Distortion", 0.0f, 1.0f, 0.5f),
-    std::make_unique < AudioParameterFloat >("tone", "Tone", 0.05f, 0.99f, 0.5f),
+    std::make_unique < AudioParameterFloat >("tone", "Tone", 0.0001f, 0.9999f, 0.5f),
     std::make_unique < AudioParameterFloat >("output", "Level", 0.0f, 1.0f, 0.5f),
     std::make_unique < AudioParameterBool >("aa", "Anti-aliasing", 1),
     std::make_unique < AudioParameterChoice >("clip_type", "Clipping Type", StringArray{"Symmetric", "Asymmetric"}, 1),
@@ -188,7 +188,7 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     {
         // Input High pass filters ---------------------------------
         float* samples = buffer.getWritePointer(0);
-        highPassIn.processSamples(samples, buffer.getNumSamples());
+        //highPassIn.processSamples(samples, buffer.getNumSamples());
 
         // Non-linearity -------------------------------------------
         // Upsample
@@ -287,7 +287,8 @@ void TubeScreamerAudioProcessor::updatePluginParameters()
     regAsymm.setDistortion(*distortion);
     aaSymm.setDistortion(*distortion);
     aaAsymm.setDistortion(*distortion);
-    toneStage.setTone(*tone);
+    float toneLog = powf(*tone, 0.5);
+    toneStage.setTone(toneLog);
     levelSmoothed.setTargetValue(*out);
 }
 
