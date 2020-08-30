@@ -1,3 +1,10 @@
+/*-----------------------------------------------------------------------
+ ALIASING REDUCTION IN VIRTUAL ANALOGUE MODELLING
+ Alistair Carson 2020
+ MSc Acoustics & Music Technology
+ University of Edinburgh
+--------------------------------------------------------------------*/
+
 #pragma once
 #ifndef TSClippingStage_h
 #define TSClippingStage_h

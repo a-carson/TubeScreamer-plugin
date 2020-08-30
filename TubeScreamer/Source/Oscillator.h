@@ -1,3 +1,12 @@
+/*-----------------------------------------------------------------------
+ ALIASING REDUCTION IN VIRTUAL ANALOGUE MODELLING
+ Alistair Carson 2020
+ MSc Acoustics & Music Technology
+ University of Edinburgh
+
+ NB this file was written and submitted for the Audio Programming module,
+ and used in this project only for testing purposes.
+--------------------------------------------------------------------*/
 #pragma once
 
 
