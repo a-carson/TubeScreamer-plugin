@@ -117,8 +117,7 @@ void TubeScreamerAudioProcessor::prepareToPlay (double sampleRate, int samplesPe
     sineOsc.setSampleRate(fs);
     sineOsc.setFrequency(220.0);
 
-    // Input and Output High Pass (DC Block)
-    highPassIn.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 15.6));
+    // Output High Pass (DC Block)
     highPassOut.setCoefficients(IIRCoefficients::makeHighPass(sampleRate, 3.0));
 
     // Clipping
@@ -179,17 +178,13 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // UI Params -----------------------------------------------
+    // UI Params --------------------------------------------------
     if (shouldUpdate)
         updatePluginParameters();
 
 
     if (isOn)
     {
-        // Input High pass filters ---------------------------------
-        float* samples = buffer.getWritePointer(0);
-        //highPassIn.processSamples(samples, buffer.getNumSamples());
-
         // Non-linearity -------------------------------------------
         // Upsample
         AudioBlock<float> block{ buffer };
@@ -203,14 +198,15 @@ void TubeScreamerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             // Sine wave - for testing only
             //newSamples[i] = 0.1f * sineOsc.process();
             newSamples[i] *= 0.95F;
-            if ((int)*isAa)
+
+            if ((int)*isAa)         // if antialiasing on
             { 
                 if ((int)*isSymm < 1)
                     newSamples[i] = aaSymm.antiAliasedProcess(newSamples[i]);
                 else
                     newSamples[i] = aaAsymm.antiAliasedProcess(newSamples[i]);
             }
-            else
+            else                    // regular simulation
             {
                 if ((int)*isSymm < 1)
                     newSamples[i] = regSymm.process(newSamples[i], false);
@@ -281,6 +277,7 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new TubeScreamerAudioProcessor();
 }
 
+/*Update plugin parameters*/
 void TubeScreamerAudioProcessor::updatePluginParameters()
 { 
     regSymm.setDistortion(*distortion);

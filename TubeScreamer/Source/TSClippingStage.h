@@ -22,13 +22,14 @@ public:
 		asymmetric
 	};
 
+	/*Constructor*/
 	TSClippingStage(ClippingType type)
 	{
 		clippingType = type;
 	};
 
 
-	/*Set sample rate*/
+	/*Set sample rate in Hz*/
 	void setSampleRate(temp sampleRate)
 	{
 		fs = sampleRate;
@@ -315,7 +316,7 @@ public:
 		else
 			return K_ * (Is / (Vt * Ni)) * (exp(y / (Vt * Ni)) + 0.5 * exp(-y / (2.0 * Vt * Ni))) - 1.0;
 	}
-
+	/*Transitional voltage estimate for capped newtons method*/
 	temp capFunc(temp Q)
 	{
 		if (clippingType == ClippingType::symmetric)
@@ -324,6 +325,7 @@ public:
 			return fabs(-2.0 * Ni * Vt * log(-2.0 * Ni * Vt / (Q * Is)));
 	}
 
+	/*New iterate function*/
 	temp newIterate(temp p)
 	{
 		if (clippingType == ClippingType::symmetric)

@@ -33,7 +33,6 @@ TubeScreamerAudioProcessorEditor::TubeScreamerAudioProcessorEditor(TubeScreamerA
     toneKnob.setTextBoxStyle(Slider::TextEntryBoxPosition::NoTextBox, false, 50, 50);
     toneAttachment = std::make_unique<SliderAttachment>(audioProcessor.getAPVTS(), "tone", toneKnob);
 
-
     addAndMakeVisible(levelKnob);
     levelKnob.setSliderStyle(juce::Slider::Rotary);
     levelKnob.setRange(0.0f, 1.0f, 0.01f);

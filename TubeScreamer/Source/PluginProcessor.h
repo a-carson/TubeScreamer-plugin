@@ -59,6 +59,7 @@ public:
     // Audio parameters
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+    
 
     AudioProcessorValueTreeState& getAPVTS() { return parameters; };
     bool isOn;
@@ -78,8 +79,7 @@ private:
     SmoothedValue<float> toneSmoothed;
     SmoothedValue<float> levelSmoothed;
 
-    // High pass filters
-    IIRFilter highPassIn;
+    // High pass filter
     IIRFilter highPassOut;
 
     // Nonlinearities

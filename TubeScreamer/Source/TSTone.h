@@ -2,14 +2,19 @@
 #ifndef TSTone_h
 #define TSTone_h
 #include "JuceHeader.h"
-#include "Matrices.h"
 
-//#include <cmath>
 using namespace juce;
 using namespace dsp;
 
 template<class temp>
 
+/*
+Tube Screamer tone stage class
+
+Calculates the filter coefficients for a specific tone knob position
+and processes samples with an IIR filter.
+
+*/
 class TSTone
 {
 public:
@@ -18,13 +23,21 @@ public:
 	{
 	};
 
+	/*Set sample rate in Hz*/
 	void setSampleRate(temp sampleRate)
 	{
 		c = 2.0f * sampleRate;
 	}
 
+	/*Set tone knob position 0 <= tone <= 1*/
 	void setTone(temp tone)
 	{
+		if (tone > 1.0)
+			tone = 1.0;
+
+		if (tone < 0.0)
+			tone = 0.0;
+
 		// Set Tone Potentiometer
 		Rl = tone * 20e3;
 		Rr = (1.0 - tone) * 20e3;
@@ -58,10 +71,11 @@ public:
 			a[2-i] /= a[0];
 		}
 
+		// Set filter coefficients
 		filter.setCoefficients(IIRCoefficients(b[0], b[1], b[2], a[0], a[1], a[2]));
 	}
 
-	/*IIR Filter*/
+	/*Process sample by sample*/
 	temp processSingleSample(temp in)
 	{
 		auto out = b[0] * in + y1;
@@ -74,6 +88,7 @@ public:
 		return out;
 	}
 
+	/*Process block of samples*/
 	void processBlock(temp* samples, int numSamples)
 	{
 		filter.processSamples(samples, numSamples);
