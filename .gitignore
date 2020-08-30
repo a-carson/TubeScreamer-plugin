@@ -1819,3 +1819,4 @@ TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/PluginProcessor.nativ
 TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/PluginProcessor.nativecodeanalysis.xml
 TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/TubeScreamer.lib.lastcodeanalysissucceeded
 TubeScreamer/Builds/VisualStudio2019/x64/Debug/Shared Code/vc.nativecodeanalysis.all.xml
+*.tlog
